@@ -43,7 +43,15 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
 
   return budget
 }
-
+// Actualiza el saldo inicial del presupuesto
+export async function updateInitialBalance(budgetId: string, amount: number) {
+  const updated = await prisma.monthlyBudget.update({
+    where: { id: budgetId },
+    data: { initialBalance: amount },
+  })
+  revalidatePath('/')
+  return updated
+}
 // Agrega un nuevo rubro estimado (ej. Sueldo, Renta, Liverpool)
 export async function addBudgetItem(data: {
   budgetId: string
