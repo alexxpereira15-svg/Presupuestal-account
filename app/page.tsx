@@ -1,7 +1,6 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
 import BudgetClient from './BudgetClient'
 
-// ⚡ Fuerza a Next.js a renderizar esta página dinámicamente en el servidor en cada petición
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
@@ -9,17 +8,38 @@ export default async function HomePage() {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
 
-  // Carga o crea el presupuesto del mes actual
-  const budget = await getOrCreateMonthlyBudget('user_default', year, month)
+  let budget = null
+  let errorMessage = ''
 
-  // Cálculo de totales con comprobación segura
+  try {
+    budget = await getOrCreateMonthlyBudget('user_default', year, month)
+  } catch (error: any) {
+    console.error('Error al conectar con la base de datos:', error)
+    errorMessage = error?.message || 'Error de conexión con la base de datos en Neon.'
+  }
+
+  if (!budget) {
+    return (
+      <div className="max-w-xl mx-auto mt-12 p-6 bg-slate-800/80 border border-rose-500/50 rounded-2xl text-center space-y-4">
+        <h2 className="text-xl font-bold text-rose-400">Error de conexión a la Base de Datos</h2>
+        <p className="text-sm text-slate-300">
+          La aplicación no pudo comunicarse con Neon PostgreSQL.
+        </p>
+        <div className="bg-slate-900 p-3 rounded-lg text-xs text-rose-300 font-mono text-left overflow-x-auto">
+          {errorMessage}
+        </div>
+      </div>
+    )
+  }
+
+  // Cálculos de totales
   const totalIncomeReal = (budget.transactions || [])
-    .filter(t => (t as any).budgetItem?.type === 'INCOME')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0)
+    .filter((t: any) => t.budgetItem?.type === 'INCOME')
+    .reduce((acc: number, curr: any) => acc + Number(curr.amount), 0)
 
   const totalExpenseReal = (budget.transactions || [])
-    .filter(t => (t as any).budgetItem?.type !== 'INCOME')
-    .reduce((acc, curr) => acc + Number(curr.amount), 0)
+    .filter((t: any) => t.budgetItem?.type !== 'INCOME')
+    .reduce((acc: number, curr: any) => acc + Number(curr.amount), 0)
 
   const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
 
@@ -40,6 +60,9 @@ export default async function HomePage() {
           </span>
         </div>
       </div>
+
+      {/* Panel de Botones Interativos */}
+      <BudgetClient budget={budget} />
 
       {/* Grid de Resumen KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -64,9 +87,7 @@ export default async function HomePage() {
           </p>
         </div>
       </div>
-      {/* Panel de Modales y Botones de Edición */}
-      <BudgetClient budget={budget} />
-      
+
       {/* Tabla de Movimientos Diarios / Registro */}
       <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
         <h3 className="text-lg font-semibold text-white">Últimos Movimientos Registrados</h3>
@@ -84,7 +105,7 @@ export default async function HomePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {budget.transactions.map((t) => (
+                {budget.transactions.map((t: any) => (
                   <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-3 whitespace-nowrap text-slate-400">
                       {new Date(t.date).toLocaleDateString('es-MX')}
