@@ -1,4 +1,5 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
+import BudgetClient from './BudgetClient'
 
 // ⚡ Fuerza a Next.js a renderizar esta página dinámicamente en el servidor en cada petición
 export const dynamic = 'force-dynamic'
@@ -63,7 +64,9 @@ export default async function HomePage() {
           </p>
         </div>
       </div>
-
+      {/* Panel de Modales y Botones de Edición */}
+      <BudgetClient budget={budget} />
+      
       {/* Tabla de Movimientos Diarios / Registro */}
       <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
         <h3 className="text-lg font-semibold text-white">Últimos Movimientos Registrados</h3>
