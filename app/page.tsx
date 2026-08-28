@@ -1,8 +1,10 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
 import { getGlobalDebts } from './actions/debt'
+import { getAnnualSummary } from './actions/annual'
 import BudgetClient from './BudgetClient'
 import MonthSelector from './MonthSelector'
 import GlobalDebtsClient from './GlobalDebtsClient'
+import AnnualSummaryClient from './AnnualSummaryClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,11 +24,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   let budget = null
   let globalDebts: any[] = []
+  let annualSummary = null
   let errorMessage = ''
 
   try {
     budget = await getOrCreateMonthlyBudget(userId, year, month)
     globalDebts = await getGlobalDebts(userId)
+    annualSummary = await getAnnualSummary(userId, year)
   } catch (error: any) {
     console.error('Error al conectar con la base de datos:', error)
     errorMessage = error?.message || 'Error de conexión con la base de datos en Neon.'
@@ -146,6 +150,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <CategoryTable title="🛒 Gastos Variables" data={variableExpenses} />
         <CategoryTable title="📈 Ahorros e Inversiones" data={savings} />
       </div>
+
+      {/* MÓDULO DE RESUMEN ANUAL TOTAL */}
+      {annualSummary && <AnnualSummaryClient summary={annualSummary} />}
 
       {/* MÓDULO DE CONTROL DE DEUDAS GLOBALES (HOJA 1) */}
       <GlobalDebtsClient debts={globalDebts} userId={userId} />
