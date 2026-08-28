@@ -1,21 +1,19 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
-import { createTransaction } from './actions/transaction'
 
 export default async function HomePage() {
-  // Por defecto cargamos el mes actual (Usuario demo / temporal "user_default")
   const currentDate = new Date()
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
 
   const budget = await getOrCreateMonthlyBudget('user_default', year, month)
 
-  // Cálculo de totales
+  // Cálculo de totales con comprobación segura
   const totalIncomeReal = budget.transactions
-    .filter(t => t.budgetItem?.type === 'INCOME')
+    .filter(t => (t as any).budgetItem?.type === 'INCOME')
     .reduce((acc, curr) => acc + Number(curr.amount), 0)
 
   const totalExpenseReal = budget.transactions
-    .filter(t => t.budgetItem?.type !== 'INCOME')
+    .filter(t => (t as any).budgetItem?.type !== 'INCOME')
     .reduce((acc, curr) => acc + Number(curr.amount), 0)
 
   const available = Number(budget.initialBalance) + totalIncomeReal - totalExpenseReal
