@@ -1,6 +1,8 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
+import { getGlobalDebts } from './actions/debt'
 import BudgetClient from './BudgetClient'
 import MonthSelector from './MonthSelector'
+import GlobalDebtsClient from './GlobalDebtsClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,11 +18,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const year = searchParams?.year ? parseInt(searchParams.year, 10) : currentDate.getFullYear()
   const month = searchParams?.month ? parseInt(searchParams.month, 10) : currentDate.getMonth() + 1
 
+  const userId = 'user_default'
+
   let budget = null
+  let globalDebts: any[] = []
   let errorMessage = ''
 
   try {
-    budget = await getOrCreateMonthlyBudget('user_default', year, month)
+    budget = await getOrCreateMonthlyBudget(userId, year, month)
+    globalDebts = await getGlobalDebts(userId)
   } catch (error: any) {
     console.error('Error al conectar con la base de datos:', error)
     errorMessage = error?.message || 'Error de conexión con la base de datos en Neon.'
@@ -40,7 +46,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     )
   }
 
-  // Helper para filtrar rubros y calcular totales (Estimado vs Real)
+  // Helper para filtrar rubros y calcular totales
   const items = budget.items || []
   const transactions = budget.transactions || []
 
@@ -66,14 +72,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     return { items: itemsWithTotals, totalEstimated, totalReal }
   }
 
-  // Grupos por tipo
   const incomes = getCategoryData('INCOME')
   const fixedExpenses = getCategoryData('FIXED_EXPENSE')
   const debts = getCategoryData('DEBT')
   const variableExpenses = getCategoryData('VARIABLE_EXPENSE')
   const savings = getCategoryData('SAVING_INVESTMENT')
 
-  // Totales globales
   const totalIncomeReal = incomes.totalReal
   const totalExpenseReal = fixedExpenses.totalReal + debts.totalReal + variableExpenses.totalReal + savings.totalReal
   const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
@@ -92,7 +96,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         <div className="flex flex-col sm:items-end gap-2">
-          {/* Componente del Selector de Mes */}
           <MonthSelector currentYear={year} currentMonth={month} />
 
           <div>
@@ -139,10 +142,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
         <CategoryTable title="💵 Ingresos" data={incomes} isIncome />
         <CategoryTable title="📌 Gastos Fijos y Facturas" data={fixedExpenses} />
-        <CategoryTable title="💳 Deudas y Créditos" data={debts} />
+        <CategoryTable title="💳 Deudas y Créditos del Mes" data={debts} />
         <CategoryTable title="🛒 Gastos Variables" data={variableExpenses} />
         <CategoryTable title="📈 Ahorros e Inversiones" data={savings} />
       </div>
+
+      {/* MÓDULO DE CONTROL DE DEUDAS GLOBALES (HOJA 1) */}
+      <GlobalDebtsClient debts={globalDebts} userId={userId} />
 
       {/* Tabla de Movimientos Diarios */}
       <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
