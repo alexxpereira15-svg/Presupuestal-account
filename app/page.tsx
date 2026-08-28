@@ -32,15 +32,42 @@ export default async function HomePage() {
     )
   }
 
-  // Cálculos de totales
-  const totalIncomeReal = (budget.transactions || [])
-    .filter((t: any) => t.budgetItem?.type === 'INCOME')
-    .reduce((acc: number, curr: any) => acc + Number(curr.amount), 0)
+  // Helper para filtrar rubros y calcular totales (Estimado vs Real)
+  const items = budget.items || []
+  const transactions = budget.transactions || []
 
-  const totalExpenseReal = (budget.transactions || [])
-    .filter((t: any) => t.budgetItem?.type !== 'INCOME')
-    .reduce((acc: number, curr: any) => acc + Number(curr.amount), 0)
+  const getCategoryData = (type: string) => {
+    const categoryItems = items.filter((item: any) => item.type === type)
 
+    const itemsWithTotals = categoryItems.map((item: any) => {
+      const realAmount = transactions
+        .filter((t: any) => t.budgetItemId === item.id)
+        .reduce((sum: number, t: any) => sum + Number(t.amount), 0)
+
+      return {
+        ...item,
+        estimated: Number(item.estimatedAmount),
+        real: realAmount,
+        diff: Number(item.estimatedAmount) - realAmount,
+      }
+    })
+
+    const totalEstimated = itemsWithTotals.reduce((sum: number, i: any) => sum + i.estimated, 0)
+    const totalReal = itemsWithTotals.reduce((sum: number, i: any) => sum + i.real, 0)
+
+    return { items: itemsWithTotals, totalEstimated, totalReal }
+  }
+
+  // Grupos por tipo
+  const incomes = getCategoryData('INCOME')
+  const fixedExpenses = getCategoryData('FIXED_EXPENSE')
+  const debts = getCategoryData('DEBT')
+  const variableExpenses = getCategoryData('VARIABLE_EXPENSE')
+  const savings = getCategoryData('SAVING_INVESTMENT')
+
+  // Totales globales
+  const totalIncomeReal = incomes.totalReal
+  const totalExpenseReal = fixedExpenses.totalReal + debts.totalReal + variableExpenses.totalReal + savings.totalReal
   const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
 
   return (
@@ -60,9 +87,6 @@ export default async function HomePage() {
           </span>
         </div>
       </div>
-
-      {/* Panel de Botones Interativos */}
-      <BudgetClient budget={budget} />
 
       {/* Grid de Resumen KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -88,11 +112,27 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Tabla de Movimientos Diarios / Registro */}
+      {/* Botones de Acción / Modales */}
+      <BudgetClient budget={budget} />
+
+      {/* SECCIÓN DE TABLAS COMPARATIVAS POR CATEGORÍA */}
+      <div className="space-y-6">
+        <h3 className="text-xl font-bold text-white border-b border-slate-800 pb-2">
+          Desglose: Presupuestado vs. Real
+        </h3>
+
+        <CategoryTable title="💵 Ingresos" data={incomes} isIncome />
+        <CategoryTable title="📌 Gastos Fijos y Facturas" data={fixedExpenses} />
+        <CategoryTable title="💳 Deudas y Créditos" data={debts} />
+        <CategoryTable title="🛒 Gastos Variables" data={variableExpenses} />
+        <CategoryTable title="📈 Ahorros e Inversiones" data={savings} />
+      </div>
+
+      {/* Tabla de Movimientos Diarios */}
       <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-white">Últimos Movimientos Registrados</h3>
+        <h3 className="text-lg font-semibold text-white">Registro General de Movimientos Diarios</h3>
         
-        {(!budget.transactions || budget.transactions.length === 0) ? (
+        {(!transactions || transactions.length === 0) ? (
           <p className="text-slate-500 text-sm italic py-4 text-center">No hay movimientos registrados en este mes aún.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -101,16 +141,20 @@ export default async function HomePage() {
                 <tr>
                   <th className="px-4 py-3 rounded-l-lg">Fecha</th>
                   <th className="px-4 py-3">Descripción</th>
-                  <th className="px-4 py-3 text-right rounded-r-lg">Monto</th>
+                  <th className="px-4 py-3">Rubro Asignado</th>
+                  <th className="px-4 py-3 text-right rounded-r-lg">Monto Real</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {budget.transactions.map((t: any) => (
+                {transactions.map((t: any) => (
                   <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-3 whitespace-nowrap text-slate-400">
                       {new Date(t.date).toLocaleDateString('es-MX')}
                     </td>
                     <td className="px-4 py-3 font-medium text-white">{t.description || 'Sin descripción'}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs">
+                      {t.budgetItem ? t.budgetItem.name : <span className="italic text-slate-600">General</span>}
+                    </td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-400">
                       ${Number(t.amount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                     </td>
@@ -121,6 +165,52 @@ export default async function HomePage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// Componente Reutilizable para la Tabla de cada Categoría
+function CategoryTable({ title, data, isIncome = false }: { title: string; data: any; isIncome?: boolean }) {
+  return (
+    <div className="bg-slate-800/40 rounded-xl border border-slate-800 overflow-hidden">
+      <div className="bg-slate-800/80 px-5 py-3 flex justify-between items-center border-b border-slate-700/50">
+        <h4 className="font-semibold text-white text-base">{title}</h4>
+        <div className="text-xs space-x-4 text-slate-300 font-mono">
+          <span>Est: <b className="text-slate-100">${data.totalEstimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b></span>
+          <span>Real: <b className={isIncome ? 'text-emerald-400' : 'text-rose-400'}>${data.totalReal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b></span>
+        </div>
+      </div>
+
+      {data.items.length === 0 ? (
+        <p className="text-xs text-slate-500 italic p-4 text-center">No hay rubros agregados a esta categoría.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-slate-300">
+            <thead className="text-[11px] uppercase bg-slate-900/40 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th className="px-5 py-2">Rubro</th>
+                <th className="px-5 py-2 text-right">Presupuestado</th>
+                <th className="px-5 py-2 text-right">Real (Pagado/Recibido)</th>
+                <th className="px-5 py-2 text-right">Diferencia</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {data.items.map((item: any) => (
+                <tr key={item.id} className="hover:bg-slate-800/20">
+                  <td className="px-5 py-2.5 font-medium text-white">{item.name}</td>
+                  <td className="px-5 py-2.5 text-right font-mono">${item.estimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                  <td className="px-5 py-2.5 text-right font-mono font-semibold text-slate-100">
+                    ${item.real.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </td>
+                  <td className={`px-5 py-2.5 text-right font-mono text-xs ${item.diff < 0 ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
+                    ${item.diff.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
