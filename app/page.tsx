@@ -1,29 +1,33 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
 
+// ⚡ Fuerza a Next.js a renderizar esta página dinámicamente en el servidor en cada petición
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const currentDate = new Date()
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
 
+  // Carga o crea el presupuesto del mes actual
   const budget = await getOrCreateMonthlyBudget('user_default', year, month)
 
   // Cálculo de totales con comprobación segura
-  const totalIncomeReal = budget.transactions
+  const totalIncomeReal = (budget.transactions || [])
     .filter(t => (t as any).budgetItem?.type === 'INCOME')
     .reduce((acc, curr) => acc + Number(curr.amount), 0)
 
-  const totalExpenseReal = budget.transactions
+  const totalExpenseReal = (budget.transactions || [])
     .filter(t => (t as any).budgetItem?.type !== 'INCOME')
     .reduce((acc, curr) => acc + Number(curr.amount), 0)
 
-  const available = Number(budget.initialBalance) + totalIncomeReal - totalExpenseReal
+  const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
 
   return (
     <div className="space-y-8">
       {/* Encabezado de Mes */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/40 p-6 rounded-2xl border border-slate-800">
         <div>
-          <h2 className="text-2xl font-bold text-white">
+          <h2 className="text-2xl font-bold text-white capitalize">
             Presupuesto {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
           </h2>
           <p className="text-slate-400 text-sm">Control mensual estimado vs. real</p>
@@ -55,7 +59,7 @@ export default async function HomePage() {
         <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
           <span className="text-slate-400 text-sm font-medium">Saldo Inicial</span>
           <p className="text-2xl font-bold text-cyan-400 mt-1">
-            ${Number(budget.initialBalance).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            ${Number(budget.initialBalance || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
         </div>
       </div>
@@ -64,7 +68,7 @@ export default async function HomePage() {
       <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
         <h3 className="text-lg font-semibold text-white">Últimos Movimientos Registrados</h3>
         
-        {budget.transactions.length === 0 ? (
+        {(!budget.transactions || budget.transactions.length === 0) ? (
           <p className="text-slate-500 text-sm italic py-4 text-center">No hay movimientos registrados en este mes aún.</p>
         ) : (
           <div className="overflow-x-auto">
