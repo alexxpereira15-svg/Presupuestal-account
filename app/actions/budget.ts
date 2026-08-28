@@ -12,6 +12,9 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
     include: {
       items: true,
       transactions: {
+        include: {
+          budgetItem: true,
+        },
         orderBy: { date: 'desc' },
       },
     },
@@ -29,7 +32,11 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
       },
       include: {
         items: true,
-        transactions: true,
+        transactions: {
+          include: {
+            budgetItem: true,
+          },
+        },
       },
     })
   }
