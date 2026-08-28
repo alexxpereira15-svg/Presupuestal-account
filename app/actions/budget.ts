@@ -1,6 +1,6 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '../../lib/prisma'
 import { CategoryType } from '@prisma/client'
 
 // Obtiene o crea un presupuesto mensual para el usuario
