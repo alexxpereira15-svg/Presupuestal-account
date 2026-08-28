@@ -2,6 +2,7 @@
 
 import { prisma } from '../../lib/prisma'
 import { CategoryType } from '@prisma/client'
+import { revalidatePath } from 'next/cache'
 
 // Obtiene o crea un presupuesto mensual para el usuario
 export async function getOrCreateMonthlyBudget(userId: string, year: number, month: number) {
@@ -43,6 +44,26 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
 
   return budget
 }
+
+// Agrega un nuevo rubro estimado (ej. Sueldo, Renta, Liverpool)
+export async function addBudgetItem(data: {
+  budgetId: string
+  name: string
+  type: CategoryType
+  estimatedAmount: number
+}) {
+  const item = await prisma.budgetItem.create({
+    data: {
+      budgetId: data.budgetId,
+      name: data.name,
+      type: data.type,
+      estimatedAmount: data.estimatedAmount,
+    },
+  })
+  revalidatePath('/')
+  return item
+}
+
 // Actualiza el saldo inicial del presupuesto
 export async function updateInitialBalance(budgetId: string, amount: number) {
   const updated = await prisma.monthlyBudget.update({
@@ -51,20 +72,4 @@ export async function updateInitialBalance(budgetId: string, amount: number) {
   })
   revalidatePath('/')
   return updated
-}
-// Agrega un nuevo rubro estimado (ej. Sueldo, Renta, Liverpool)
-export async function addBudgetItem(data: {
-  budgetId: string
-  name: string
-  type: CategoryType
-  estimatedAmount: number
-}) {
-  return await prisma.budgetItem.create({
-    data: {
-      budgetId: data.budgetId,
-      name: data.name,
-      type: data.type,
-      estimatedAmount: data.estimatedAmount,
-    },
-  })
 }
