@@ -1,12 +1,20 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
 import BudgetClient from './BudgetClient'
+import MonthSelector from './MonthSelector'
 
 export const dynamic = 'force-dynamic'
 
-export default async function HomePage() {
+interface HomePageProps {
+  searchParams?: {
+    year?: string
+    month?: string
+  }
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
   const currentDate = new Date()
-  const year = currentDate.getFullYear()
-  const month = currentDate.getMonth() + 1
+  const year = searchParams?.year ? parseInt(searchParams.year, 10) : currentDate.getFullYear()
+  const month = searchParams?.month ? parseInt(searchParams.month, 10) : currentDate.getMonth() + 1
 
   let budget = null
   let errorMessage = ''
@@ -72,19 +80,27 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8">
-      {/* Encabezado de Mes */}
+      {/* Encabezado de Mes y Navegador */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/40 p-6 rounded-2xl border border-slate-800">
-        <div>
-          <h2 className="text-2xl font-bold text-white capitalize">
-            Presupuesto {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
-          </h2>
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-white capitalize">
+              Presupuesto {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
+            </h2>
+          </div>
           <p className="text-slate-400 text-sm">Control mensual estimado vs. real</p>
         </div>
-        <div className="text-right">
-          <span className="text-xs text-slate-400 block uppercase tracking-wider font-semibold">Disponible Total</span>
-          <span className={`text-3xl font-extrabold ${available >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            ${available.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-          </span>
+
+        <div className="flex flex-col sm:items-end gap-2">
+          {/* Componente del Selector de Mes */}
+          <MonthSelector currentYear={year} currentMonth={month} />
+
+          <div>
+            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold mr-2">Disponible:</span>
+            <span className={`text-2xl font-extrabold ${available >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              ${available.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -169,7 +185,6 @@ export default async function HomePage() {
   )
 }
 
-// Componente Reutilizable para la Tabla de cada Categoría
 function CategoryTable({ title, data, isIncome = false }: { title: string; data: any; isIncome?: boolean }) {
   return (
     <div className="bg-slate-800/40 rounded-xl border border-slate-800 overflow-hidden">
