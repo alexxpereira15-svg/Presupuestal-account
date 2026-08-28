@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createTransaction, deleteTransaction } from './actions/transaction'
+import { createTransaction } from './actions/transaction'
 import { addBudgetItem, updateInitialBalance } from './actions/budget'
 
 export default function BudgetClient({ budget }: { budget: any }) {
@@ -18,7 +18,7 @@ export default function BudgetClient({ budget }: { budget: any }) {
   const [itemType, setItemType] = useState('FIXED_EXPENSE')
   const [itemEstimated, setItemEstimated] = useState('')
 
-  const [initialBalance, setInitialBalance] = useState(budget.initialBalance?.toString() || '0')
+  const [initialBalance, setInitialBalance] = useState(budget?.initialBalance?.toString() || '0')
   const [loading, setLoading] = useState(false)
 
   // Handlers
@@ -67,31 +67,25 @@ export default function BudgetClient({ budget }: { budget: any }) {
     setLoading(false)
   }
 
-  const handleDeleteTx = async (id: string) => {
-    if (confirm('¿Deseas eliminar este movimiento?')) {
-      await deleteTransaction(id)
-    }
-  }
-
   return (
     <div className="space-y-6">
       {/* Botones de Acción */}
       <div className="flex flex-wrap gap-3">
         <button
           onClick={() => setIsTxModalOpen(true)}
-          className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold px-4 py-2 rounded-xl text-sm transition"
+          className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-emerald-500/10"
         >
           + Registrar Movimiento
         </button>
         <button
           onClick={() => setIsItemModalOpen(true)}
-          className="bg-slate-800 hover:bg-slate-700 text-white font-medium px-4 py-2 rounded-xl text-sm border border-slate-700 transition"
+          className="bg-slate-800 hover:bg-slate-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm border border-slate-700 transition"
         >
           + Agregar Rubro Estimado
         </button>
         <button
           onClick={() => setIsBalanceModalOpen(true)}
-          className="bg-slate-800 hover:bg-slate-700 text-cyan-400 font-medium px-4 py-2 rounded-xl text-sm border border-slate-700 transition"
+          className="bg-slate-800 hover:bg-slate-700 text-cyan-400 font-medium px-4 py-2.5 rounded-xl text-sm border border-slate-700 transition"
         >
           ✏️ Editar Saldo Inicial
         </button>
@@ -99,9 +93,9 @@ export default function BudgetClient({ budget }: { budget: any }) {
 
       {/* Modal: Registrar Movimiento */}
       {isTxModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4">
-            <h3 className="text-lg font-bold text-white">Nuevo Movimiento</h3>
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Nuevo Movimiento Real</h3>
             <form onSubmit={handleAddTransaction} className="space-y-4">
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Monto ($)</label>
@@ -132,7 +126,7 @@ export default function BudgetClient({ budget }: { budget: any }) {
                 <select
                   value={itemId}
                   onChange={(e) => setItemId(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm"
                 >
                   <option value="">Sin Asignar / Movimiento General</option>
                   {budget.items?.map((item: any) => (
@@ -166,9 +160,9 @@ export default function BudgetClient({ budget }: { budget: any }) {
 
       {/* Modal: Agregar Rubro Estimado */}
       {isItemModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4">
-            <h3 className="text-lg font-bold text-white">Nuevo Rubro Estimado</h3>
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Nuevo Rubro Presupuestado</h3>
             <form onSubmit={handleAddBudgetItem} className="space-y-4">
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Nombre del Rubro</label>
@@ -183,11 +177,11 @@ export default function BudgetClient({ budget }: { budget: any }) {
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Tipo de Categoria</label>
+                <label className="text-xs text-slate-400 block mb-1">Categoría</label>
                 <select
                   value={itemType}
                   onChange={(e) => setItemType(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none text-sm"
                 >
                   <option value="INCOME">Ingreso</option>
                   <option value="FIXED_EXPENSE">Gasto Fijo / Factura</option>
@@ -198,7 +192,7 @@ export default function BudgetClient({ budget }: { budget: any }) {
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Monto Presupuestado / Estimado ($)</label>
+                <label className="text-xs text-slate-400 block mb-1">Monto Presupuestado ($)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -233,9 +227,9 @@ export default function BudgetClient({ budget }: { budget: any }) {
 
       {/* Modal: Editar Saldo Inicial */}
       {isBalanceModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm space-y-4">
-            <h3 className="text-lg font-bold text-white">Editar Saldo Inicial del Mes</h3>
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Editar Saldo Inicial</h3>
             <form onSubmit={handleUpdateBalance} className="space-y-4">
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Monto Inicial ($)</label>
