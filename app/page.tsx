@@ -39,10 +39,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   if (!budget) {
     return (
-      <div className="max-w-xl mx-auto mt-12 p-6 bg-slate-800/80 border border-rose-500/50 rounded-2xl text-center space-y-4">
+      <div className="max-w-xl mx-auto mt-12 p-6 bg-slate-900/90 border border-rose-500/30 rounded-3xl text-center space-y-4 shadow-2xl backdrop-blur-xl">
+        <div className="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center mx-auto text-xl">⚠️</div>
         <h2 className="text-xl font-bold text-rose-400">Error de conexión a la Base de Datos</h2>
         <p className="text-sm text-slate-300">La aplicación no pudo comunicarse con Neon PostgreSQL.</p>
-        <div className="bg-slate-900 p-3 rounded-lg text-xs text-rose-300 font-mono text-left overflow-x-auto">
+        <div className="bg-slate-950 p-4 rounded-xl text-xs text-rose-300 font-mono text-left overflow-x-auto border border-slate-800">
           {errorMessage}
         </div>
       </div>
@@ -88,32 +89,50 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const dashboardView = (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
-          <span className="text-slate-400 text-sm font-medium">(+) Ingresos Reales</span>
-          <p className="text-2xl font-bold text-emerald-400 mt-1">
+        <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 hover:border-emerald-500/30 transition-all duration-300 shadow-xl backdrop-blur-xl group">
+          <div className="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase tracking-wider">
+            <span>(+) Ingresos Reales</span>
+            <span className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-sm group-hover:scale-110 transition-transform">💵</span>
+          </div>
+          <p className="text-3xl font-extrabold text-emerald-400 font-mono mt-3">
             ${totalIncomeReal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
+          <p className="text-[11px] text-slate-500 mt-2 font-mono">
+            Est: ${incomes.totalEstimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+          </p>
         </div>
 
-        <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
-          <span className="text-slate-400 text-sm font-medium">(-) Gastos Reales Total</span>
-          <p className="text-2xl font-bold text-rose-400 mt-1">
+        <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 hover:border-rose-500/30 transition-all duration-300 shadow-xl backdrop-blur-xl group">
+          <div className="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase tracking-wider">
+            <span>(-) Gastos Reales Total</span>
+            <span className="p-1.5 bg-rose-500/10 text-rose-400 rounded-lg text-sm group-hover:scale-110 transition-transform">💸</span>
+          </div>
+          <p className="text-3xl font-extrabold text-rose-400 font-mono mt-3">
             ${totalExpenseReal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
+          <p className="text-[11px] text-slate-500 mt-2 font-mono">
+            Est: ${(fixedExpenses.totalEstimated + debts.totalEstimated + variableExpenses.totalEstimated).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+          </p>
         </div>
 
-        <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
-          <span className="text-slate-400 text-sm font-medium">Saldo Inicial del Mes</span>
-          <p className="text-2xl font-bold text-cyan-400 mt-1">
+        <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800/80 hover:border-cyan-500/30 transition-all duration-300 shadow-xl backdrop-blur-xl group">
+          <div className="flex justify-between items-center text-slate-400 text-xs font-semibold uppercase tracking-wider">
+            <span>Saldo Inicial del Mes</span>
+            <span className="p-1.5 bg-cyan-500/10 text-cyan-400 rounded-lg text-sm group-hover:scale-110 transition-transform">🏦</span>
+          </div>
+          <p className="text-3xl font-extrabold text-cyan-400 font-mono mt-3">
             ${Number(budget.initialBalance || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
+          <p className="text-[11px] text-slate-500 mt-2">Traspaso automático del mes anterior</p>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold text-white">Resumen Estimado vs. Real</h3>
+      <div className="space-y-4 pt-2">
+        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <span>🎯</span> Resumen de Rubros: Presupuestado vs. Real
+        </h3>
         <CategoryTable title="💵 Ingresos" data={incomes} isIncome />
-        <CategoryTable title="📌 Gastos Fijos" data={fixedExpenses} />
+        <CategoryTable title="📌 Gastos Fijos y Facturas" data={fixedExpenses} />
         <CategoryTable title="💳 Deudas y Créditos del Mes" data={debts} />
         <CategoryTable title="🛒 Gastos Variables" data={variableExpenses} />
         <CategoryTable title="📈 Ahorros e Inversiones" data={savings} />
@@ -124,11 +143,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // 2. Vista Presupuesto Estimado
   const estimatedBudgetView = (
     <div className="space-y-6">
-      {/* Botones exclusivos de Presupuesto Estimado */}
       <EstimatedBudgetActions budget={budget} />
-
-      <div className="space-y-4 pt-2">
-        <h3 className="text-lg font-bold text-white">Configuración de Rubros Estimados</h3>
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <span>📝</span> Definición de Rubros Estimados
+        </h3>
         <CategoryTable title="💵 Ingresos Estimados" data={incomes} isIncome />
         <CategoryTable title="📌 Gastos Fijos Estimados" data={fixedExpenses} />
         <CategoryTable title="💳 Deudas Estimadas del Mes" data={debts} />
@@ -141,35 +160,44 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // 3. Vista Movimientos Reales
   const transactionsView = (
     <div className="space-y-6">
-      {/* Botón exclusivo de Registro Real */}
       <RealTransactionActions budget={budget} />
-
-      <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-white">Registro Diario de Movimientos</h3>
+      <div className="bg-slate-900/60 rounded-3xl border border-slate-800/80 p-6 space-y-4 shadow-xl backdrop-blur-xl">
+        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <span>📋</span> Bitácora Diaria de Movimientos
+        </h3>
         {(!transactions || transactions.length === 0) ? (
-          <p className="text-slate-500 text-sm italic py-4 text-center">No hay movimientos registrados en este mes aún.</p>
+          <div className="py-12 text-center space-y-2">
+            <span className="text-3xl block">🍃</span>
+            <p className="text-slate-500 text-sm italic">No hay movimientos registrados en este mes aún.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-300">
-              <thead className="text-xs uppercase bg-slate-800/80 text-slate-400">
+              <thead className="text-[11px] uppercase tracking-wider bg-slate-800/60 text-slate-400 font-semibold">
                 <tr>
-                  <th className="px-4 py-3 rounded-l-lg">Fecha</th>
-                  <th className="px-4 py-3">Descripción</th>
-                  <th className="px-4 py-3">Rubro Asignado</th>
-                  <th className="px-4 py-3 text-right rounded-r-lg">Monto Real</th>
+                  <th className="px-5 py-3 rounded-l-xl">Fecha</th>
+                  <th className="px-5 py-3">Descripción</th>
+                  <th className="px-5 py-3">Rubro Asignado</th>
+                  <th className="px-5 py-3 text-right rounded-r-xl">Monto Real</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-slate-800/60 font-medium">
                 {transactions.map((t: any) => (
                   <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-400">
+                    <td className="px-5 py-3.5 whitespace-nowrap text-slate-400 font-mono text-xs">
                       {new Date(t.date).toLocaleDateString('es-MX')}
                     </td>
-                    <td className="px-4 py-3 font-medium text-white">{t.description || 'Sin descripción'}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">
-                      {t.budgetItem ? t.budgetItem.name : <span className="italic text-slate-600">General</span>}
+                    <td className="px-5 py-3.5 text-white">{t.description || 'Sin descripción'}</td>
+                    <td className="px-5 py-3.5 text-slate-400 text-xs">
+                      {t.budgetItem ? (
+                        <span className="inline-block px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700/60 text-slate-300">
+                          {t.budgetItem.name}
+                        </span>
+                      ) : (
+                        <span className="italic text-slate-600">General</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-emerald-400">
+                    <td className="px-5 py-3.5 text-right font-bold font-mono text-emerald-400">
                       ${Number(t.amount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
@@ -190,20 +218,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="space-y-6">
-      {/* Selector Global de Mes y Disponible Fijo */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/40 p-6 rounded-2xl border border-slate-800">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-white capitalize">
+      {/* Targeta Principal: Selector de Mes Global y Balance */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="space-y-1 z-10">
+          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-widest block">Período Seleccionado</span>
+          <h2 className="text-3xl font-extrabold text-white capitalize tracking-tight">
             {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
           </h2>
-          <p className="text-slate-400 text-sm">Selecciona el mes global para filtrar la información</p>
+          <p className="text-slate-400 text-xs">Filtra toda la información de la app seleccionando el mes</p>
         </div>
 
-        <div className="flex flex-col sm:items-end gap-2">
+        <div className="flex flex-col sm:items-end gap-3 z-10 w-full sm:w-auto">
           <MonthSelector currentYear={year} currentMonth={month} />
-          <div>
-            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold mr-2">Disponible del Mes:</span>
-            <span className={`text-2xl font-extrabold ${available >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <div className="bg-slate-950/60 px-4 py-2 rounded-2xl border border-slate-800/80 flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+            <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">Disponible del Mes:</span>
+            <span className={`text-2xl font-black font-mono ${available >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               ${available.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </span>
           </div>
@@ -224,12 +255,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
 function CategoryTable({ title, data, isIncome = false }: { title: string; data: any; isIncome?: boolean }) {
   return (
-    <div className="bg-slate-800/40 rounded-xl border border-slate-800 overflow-hidden">
-      <div className="bg-slate-800/80 px-5 py-3 flex justify-between items-center border-b border-slate-700/50">
-        <h4 className="font-semibold text-white text-base">{title}</h4>
+    <div className="bg-slate-900/60 rounded-2xl border border-slate-800/80 overflow-hidden shadow-lg backdrop-blur-xl">
+      <div className="bg-slate-800/50 px-5 py-3.5 flex justify-between items-center border-b border-slate-800">
+        <h4 className="font-bold text-white text-sm">{title}</h4>
         <div className="text-xs space-x-4 text-slate-300 font-mono">
-          <span>Est: <b className="text-slate-100">${data.totalEstimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b></span>
-          <span>Real: <b className={isIncome ? 'text-emerald-400' : 'text-rose-400'}>${data.totalReal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b></span>
+          <span>Est: <b className="text-slate-200">${data.totalEstimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b></span>
+          <span>Real: <b className={isIncome ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>${data.totalReal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b></span>
         </div>
       </div>
 
@@ -238,23 +269,23 @@ function CategoryTable({ title, data, isIncome = false }: { title: string; data:
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">
-            <thead className="text-[11px] uppercase bg-slate-900/40 text-slate-400 border-b border-slate-800">
+            <thead className="text-[10px] uppercase tracking-wider bg-slate-950/40 text-slate-400 border-b border-slate-800 font-semibold">
               <tr>
-                <th className="px-5 py-2">Rubro</th>
-                <th className="px-5 py-2 text-right">Presupuestado</th>
-                <th className="px-5 py-2 text-right">Real</th>
-                <th className="px-5 py-2 text-right">Diferencia</th>
+                <th className="px-5 py-2.5">Rubro</th>
+                <th className="px-5 py-2.5 text-right">Presupuestado</th>
+                <th className="px-5 py-2.5 text-right">Real</th>
+                <th className="px-5 py-2.5 text-right">Diferencia</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-800/40 text-xs font-medium">
               {data.items.map((item: any) => (
-                <tr key={item.id} className="hover:bg-slate-800/20">
-                  <td className="px-5 py-2.5 font-medium text-white">{item.name}</td>
-                  <td className="px-5 py-2.5 text-right font-mono">${item.estimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                  <td className="px-5 py-2.5 text-right font-mono font-semibold text-slate-100">
+                <tr key={item.id} className="hover:bg-slate-800/20 transition-colors">
+                  <td className="px-5 py-3 font-semibold text-white">{item.name}</td>
+                  <td className="px-5 py-3 text-right font-mono text-slate-300">${item.estimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                  <td className="px-5 py-3 text-right font-mono font-bold text-slate-100">
                     ${item.real.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                   </td>
-                  <td className={`px-5 py-2.5 text-right font-mono text-xs ${item.diff < 0 ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
+                  <td className={`px-5 py-3 text-right font-mono font-bold ${item.diff < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
                     ${item.diff.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
