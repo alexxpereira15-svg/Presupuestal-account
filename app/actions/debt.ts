@@ -3,7 +3,6 @@
 import { prisma } from '../../lib/prisma'
 import { revalidatePath } from 'next/cache'
 
-// Obtiene todas las deudas globales del usuario
 export async function getGlobalDebts(userId: string) {
   return await prisma.globalDebt.findMany({
     where: { userId },
@@ -11,7 +10,6 @@ export async function getGlobalDebts(userId: string) {
   })
 }
 
-// Crea una nueva deuda global
 export async function createGlobalDebt(data: {
   userId: string
   creditorName: string
@@ -30,24 +28,37 @@ export async function createGlobalDebt(data: {
   return debt
 }
 
-// Registra un abono/pago a una deuda global existente
-export async function addPaymentToDebt(id: string, paymentAmount: number) {
-  const debt = await prisma.globalDebt.findUnique({ where: { id } })
+export async function addPaymentToDebt(debtId: string, amount: number, budgetId?: string) {
+  const debt = await prisma.globalDebt.findUnique({ where: { id: debtId } })
   if (!debt) throw new Error('Deuda no encontrada')
 
-  const newPaidAmount = Number(debt.paidAmount) + paymentAmount
+  const newPaidAmount = Number(debt.paidAmount) + amount
 
-  const updated = await prisma.globalDebt.update({
-    where: { id },
+  const updatedDebt = await prisma.globalDebt.update({
+    where: { id: debtId },
     data: { paidAmount: newPaidAmount },
   })
+
+  // Si se proporciona el presupuesto mensual, vinculamos el abono a la bitácora de movimientos reales
+  if (budgetId) {
+    await prisma.transaction.create({
+      data: {
+        budgetId,
+        amount,
+        description: `Abono a Deuda: ${debt.creditorName}`,
+        date: new Date(),
+      },
+    })
+  }
+
   revalidatePath('/')
-  return updated
+  return updatedDebt
 }
 
-// Elimina un registro de deuda global
 export async function deleteGlobalDebt(id: string) {
-  const deleted = await prisma.globalDebt.delete({ where: { id } })
+  const deleted = await prisma.globalDebt.delete({
+    where: { id },
+  })
   revalidatePath('/')
   return deleted
 }
