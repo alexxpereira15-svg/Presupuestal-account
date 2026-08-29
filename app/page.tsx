@@ -6,6 +6,7 @@ import MonthSelector from './MonthSelector'
 import GlobalDebtsClient from './GlobalDebtsClient'
 import AnnualSummaryClient from './AnnualSummaryClient'
 import TabsNavigation from './TabsNavigation'
+import MonthlyCharts from './MonthlyCharts'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,9 +86,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const totalExpenseReal = fixedExpenses.totalReal + debts.totalReal + variableExpenses.totalReal + savings.totalReal
   const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
 
-  // 1. Vista Dashboard
+  // 1. Vista Dashboard con Gráficas Mensuales
   const dashboardView = (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Tarjetas KPI Superiores */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950 p-6 rounded-3xl border border-emerald-500/20 shadow-xl backdrop-blur-xl relative overflow-hidden">
           <div className="flex justify-between items-center text-emerald-400 text-xs font-bold uppercase tracking-wider">
@@ -132,6 +134,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </div>
 
+      {/* Gráficas Visuales del Mes */}
+      <MonthlyCharts
+        incomes={incomes}
+        fixedExpenses={fixedExpenses}
+        debts={debts}
+        variableExpenses={variableExpenses}
+        savings={savings}
+        transactions={transactions}
+      />
+
+      {/* Desglose por Categorías */}
       <div className="space-y-4 pt-2">
         <h3 className="text-xl font-black text-white flex items-center gap-2">
           <span>🎯</span> Resumen por Categoría (Presupuestado vs Real)
@@ -223,7 +236,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header Principal de la App */}
+      {/* Header Principal con Selección de Mes */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 p-6 sm:p-8 rounded-3xl border border-slate-800/80 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -258,7 +271,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   )
 }
 
-// Componente para Tarjetas de Categoria Estilizadas
 function CategoryCard({ title, data, badgeColor, isIncome = false }: { title: string; data: any; badgeColor: string; isIncome?: boolean }) {
   return (
     <div className="bg-slate-900/70 rounded-3xl border border-slate-800/80 overflow-hidden shadow-xl backdrop-blur-xl">
