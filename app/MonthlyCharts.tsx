@@ -38,7 +38,7 @@ export default function MonthlyCharts({
   debts,
   variableExpenses,
   savings,
-  transactions,
+  transactions = [],
 }: MonthlyChartsProps) {
   // Datos para Gráfica de Pastel (Distribución)
   const pieData = [
@@ -58,11 +58,14 @@ export default function MonthlyCharts({
   ]
 
   // Agrupar movimientos reales por fecha para la línea de tiempo
-  const timeDataMap: { [key: string]: number } = {}
-  (transactions || []).forEach((t) => {
-    const dateStr = new Date(t.date).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })
-    timeDataMap[dateStr] = (timeDataMap[dateStr] || 0) + Number(t.amount)
-  })
+  const timeDataMap: Record<string, number> = {};
+
+  if (Array.isArray(transactions)) {
+    transactions.forEach((t) => {
+      const dateStr = new Date(t.date).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })
+      timeDataMap[dateStr] = (timeDataMap[dateStr] || 0) + Number(t.amount)
+    })
+  }
 
   const timeData = Object.keys(timeDataMap).map((date) => ({
     fecha: date,
