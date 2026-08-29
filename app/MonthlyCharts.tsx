@@ -59,7 +59,7 @@ export default function MonthlyCharts({
 
   // Agrupar movimientos reales por fecha para la línea de tiempo
   const timeDataMap: { [key: string]: number } = {}
-  transactions.forEach((t) => {
+  (transactions || []).forEach((t) => {
     const dateStr = new Date(t.date).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })
     timeDataMap[dateStr] = (timeDataMap[dateStr] || 0) + Number(t.amount)
   })
@@ -166,5 +166,4 @@ export default function MonthlyCharts({
       </div>
     </div>
   )
-}
 }
