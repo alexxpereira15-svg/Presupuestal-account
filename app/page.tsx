@@ -5,6 +5,7 @@ import BudgetClient from './BudgetClient'
 import MonthSelector from './MonthSelector'
 import GlobalDebtsClient from './GlobalDebtsClient'
 import AnnualSummaryClient from './AnnualSummaryClient'
+import TabsNavigation from './TabsNavigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -86,7 +87,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const totalExpenseReal = fixedExpenses.totalReal + debts.totalReal + variableExpenses.totalReal + savings.totalReal
   const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
 
-  return (
+  // Vista 1: Presupuesto Mensual
+  const monthlyBudgetView = (
     <div className="space-y-8">
       {/* Encabezado de Mes y Navegador */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/40 p-6 rounded-2xl border border-slate-800">
@@ -151,12 +153,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <CategoryTable title="📈 Ahorros e Inversiones" data={savings} />
       </div>
 
-      {/* MÓDULO DE RESUMEN ANUAL TOTAL */}
-      {annualSummary && <AnnualSummaryClient summary={annualSummary} />}
-
-      {/* MÓDULO DE CONTROL DE DEUDAS GLOBALES (HOJA 1) */}
-      <GlobalDebtsClient debts={globalDebts} userId={userId} />
-
       {/* Tabla de Movimientos Diarios */}
       <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
         <h3 className="text-lg font-semibold text-white">Registro General de Movimientos Diarios</h3>
@@ -195,6 +191,20 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         )}
       </div>
     </div>
+  )
+
+  // Vista 2: Deudas Globales
+  const globalDebtsView = <GlobalDebtsClient debts={globalDebts} userId={userId} />
+
+  // Vista 3: Resumen Anual
+  const annualSummaryView = annualSummary ? <AnnualSummaryClient summary={annualSummary} /> : null
+
+  return (
+    <TabsNavigation
+      monthlyBudgetView={monthlyBudgetView}
+      globalDebtsView={globalDebtsView}
+      annualSummaryView={annualSummaryView}
+    />
   )
 }
 
