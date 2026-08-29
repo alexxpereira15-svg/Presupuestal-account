@@ -1,7 +1,7 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
 import { getGlobalDebts } from './actions/debt'
 import { getAnnualSummary } from './actions/annual'
-import { EstimatedBudgetActions, RealTransactionActions } from './BudgetClient'
+import { EstimatedBudgetActions, RealTransactionActions, ItemRowActions, TransactionRowActions } from './BudgetClient'
 import MonthSelector from './MonthSelector'
 import GlobalDebtsClient from './GlobalDebtsClient'
 import AnnualSummaryClient from './AnnualSummaryClient'
@@ -89,7 +89,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // 1. Vista Dashboard con Gráficas Mensuales
   const dashboardView = (
     <div className="space-y-8">
-      {/* Tarjetas KPI Superiores */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950 p-6 rounded-3xl border border-emerald-500/20 shadow-xl backdrop-blur-xl relative overflow-hidden">
           <div className="flex justify-between items-center text-emerald-400 text-xs font-bold uppercase tracking-wider">
@@ -134,7 +133,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </div>
 
-      {/* Gráficas Visuales del Mes */}
       <MonthlyCharts
         incomes={incomes}
         fixedExpenses={fixedExpenses}
@@ -144,7 +142,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         transactions={transactions}
       />
 
-      {/* Desglose por Categorías */}
       <div className="space-y-4 pt-2">
         <h3 className="text-xl font-black text-white flex items-center gap-2">
           <span>🎯</span> Resumen por Categoría (Presupuestado vs Real)
@@ -161,16 +158,31 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // 2. Vista Presupuesto Estimado
   const estimatedBudgetView = (
     <div className="space-y-6">
+      {/* Tarjeta Destacada de Saldo Inicial */}
+      <div className="bg-slate-900/80 p-6 rounded-3xl border border-cyan-500/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xl backdrop-blur-xl">
+        <div>
+          <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block">Configuración Base</span>
+          <h3 className="text-xl font-black text-white mt-1">Saldo Inicial del Mes</h3>
+          <p className="text-slate-400 text-xs">Monto acumulado o disponible al inicio del período</p>
+        </div>
+        <div className="bg-slate-950 px-6 py-3 rounded-2xl border border-slate-800 text-right">
+          <span className="text-3xl font-black font-mono text-cyan-400">
+            ${Number(budget.initialBalance || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
+
       <EstimatedBudgetActions budget={budget} />
+
       <div className="space-y-4 pt-2">
         <h3 className="text-xl font-black text-white flex items-center gap-2">
           <span>📝</span> Configuración de Rubros Estimados
         </h3>
-        <CategoryCard title="💵 Ingresos Estimados" data={incomes} badgeColor="bg-emerald-500/10 text-emerald-400 border-emerald-500/20" isIncome />
-        <CategoryCard title="📌 Gastos Fijos Estimados" data={fixedExpenses} badgeColor="bg-rose-500/10 text-rose-400 border-rose-500/20" />
-        <CategoryCard title="💳 Deudas Estimadas del Mes" data={debts} badgeColor="bg-indigo-500/10 text-indigo-400 border-indigo-500/20" />
-        <CategoryCard title="🛒 Gastos Variables Estimados" data={variableExpenses} badgeColor="bg-amber-500/10 text-amber-400 border-amber-500/20" />
-        <CategoryCard title="📈 Ahorros Estimados" data={savings} badgeColor="bg-purple-500/10 text-purple-400 border-purple-500/20" />
+        <CategoryCard title="💵 Ingresos Estimados" data={incomes} badgeColor="bg-emerald-500/10 text-emerald-400 border-emerald-500/20" editable isIncome />
+        <CategoryCard title="📌 Gastos Fijos Estimados" data={fixedExpenses} badgeColor="bg-rose-500/10 text-rose-400 border-rose-500/20" editable />
+        <CategoryCard title="💳 Deudas Estimadas del Mes" data={debts} badgeColor="bg-indigo-500/10 text-indigo-400 border-indigo-500/20" editable />
+        <CategoryCard title="🛒 Gastos Variables Estimados" data={variableExpenses} badgeColor="bg-amber-500/10 text-amber-400 border-amber-500/20" editable />
+        <CategoryCard title="📈 Ahorros Estimados" data={savings} badgeColor="bg-purple-500/10 text-purple-400 border-purple-500/20" editable />
       </div>
     </div>
   )
@@ -196,7 +208,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   <th className="px-5 py-3.5 rounded-l-2xl">Fecha</th>
                   <th className="px-5 py-3.5">Descripción</th>
                   <th className="px-5 py-3.5">Rubro Asignado</th>
-                  <th className="px-5 py-3.5 text-right rounded-r-2xl">Monto Real</th>
+                  <th className="px-5 py-3.5 text-right">Monto Real</th>
+                  <th className="px-5 py-3.5 text-right rounded-r-2xl">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-semibold">
@@ -218,6 +231,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     <td className="px-5 py-4 text-right font-black font-mono text-amber-400 text-base">
                       ${Number(t.amount).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                     </td>
+                    <td className="px-5 py-4 text-right">
+                      <TransactionRowActions transaction={t} budgetItems={items} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -228,15 +244,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     </div>
   )
 
-  // 4. Vista Deudas Globales
   const globalDebtsView = <GlobalDebtsClient debts={globalDebts} userId={userId} />
-
-  // 5. Vista Resumen Anual
   const annualSummaryView = annualSummary ? <AnnualSummaryClient summary={annualSummary} /> : null
 
   return (
     <div className="space-y-6">
-      {/* Header Principal con Selección de Mes */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 p-6 sm:p-8 rounded-3xl border border-slate-800/80 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -259,7 +271,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </div>
 
-      {/* Navegación por Módulos */}
       <TabsNavigation
         dashboardView={dashboardView}
         estimatedBudgetView={estimatedBudgetView}
@@ -271,7 +282,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   )
 }
 
-function CategoryCard({ title, data, badgeColor, isIncome = false }: { title: string; data: any; badgeColor: string; isIncome?: boolean }) {
+function CategoryCard({ title, data, badgeColor, editable = false, isIncome = false }: { title: string; data: any; badgeColor: string; editable?: boolean; isIncome?: boolean }) {
   return (
     <div className="bg-slate-900/70 rounded-3xl border border-slate-800/80 overflow-hidden shadow-xl backdrop-blur-xl">
       <div className="bg-slate-800/40 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800">
@@ -297,6 +308,7 @@ function CategoryCard({ title, data, badgeColor, isIncome = false }: { title: st
                 <th className="px-6 py-3 text-right">Presupuestado</th>
                 <th className="px-6 py-3 text-right">Real</th>
                 <th className="px-6 py-3 text-right">Diferencia</th>
+                {editable && <th className="px-6 py-3 text-right">Acciones</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/40 text-xs font-semibold">
@@ -310,6 +322,11 @@ function CategoryCard({ title, data, badgeColor, isIncome = false }: { title: st
                   <td className={`px-6 py-3.5 text-right font-mono font-bold ${item.diff < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
                     ${item.diff.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                   </td>
+                  {editable && (
+                    <td className="px-6 py-3.5 text-right">
+                      <ItemRowActions item={item} />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
