@@ -55,10 +55,13 @@ model Transaction {
 }
 
 model GlobalDebt {
-  id            String   @id @default(uuid())
-  userId        String
-  creditorName  String
-  totalAmount   Decimal  @db.Decimal(12, 2)
-  paidAmount    Decimal  @default(0.00) @db.Decimal(12, 2)
-  createdAt     DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  creditorName    String
+  totalAmount     Decimal  @db.Decimal(12, 2)
+  paidAmount      Decimal  @default(0) @db.Decimal(12, 2)
+  monthlyPayment  Decimal  @default(0) @db.Decimal(12, 2) // Pago mensual estimado
+  paymentType     String   @default("FIXED")              // "FIXED" o "VARIABLE"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
