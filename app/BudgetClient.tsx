@@ -4,15 +4,10 @@ import { useState } from 'react'
 import { createTransaction } from './actions/transaction'
 import { addBudgetItem, updateInitialBalance } from './actions/budget'
 
-export default function BudgetClient({ budget }: { budget: any }) {
-  const [isTxModalOpen, setIsTxModalOpen] = useState(false)
+// Componente de Acciones para la pestaña: Presupuesto Estimado
+export function EstimatedBudgetActions({ budget }: { budget: any }) {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false)
   const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false)
-
-  // Form states
-  const [amount, setAmount] = useState('')
-  const [description, setDescription] = useState('')
-  const [itemId, setItemId] = useState('')
 
   const [itemName, setItemName] = useState('')
   const [itemType, setItemType] = useState('FIXED_EXPENSE')
@@ -20,26 +15,6 @@ export default function BudgetClient({ budget }: { budget: any }) {
 
   const [initialBalance, setInitialBalance] = useState(budget?.initialBalance?.toString() || '0')
   const [loading, setLoading] = useState(false)
-
-  // Handlers
-  const handleAddTransaction = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!amount) return
-    setLoading(true)
-
-    await createTransaction({
-      budgetId: budget.id,
-      budgetItemId: itemId || undefined,
-      amount: parseFloat(amount),
-      description,
-    })
-
-    setAmount('')
-    setDescription('')
-    setItemId('')
-    setIsTxModalOpen(false)
-    setLoading(false)
-  }
 
   const handleAddBudgetItem = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,95 +43,19 @@ export default function BudgetClient({ budget }: { budget: any }) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Botones de Acción */}
-      <div className="flex flex-wrap gap-3">
-        <button
-          onClick={() => setIsTxModalOpen(true)}
-          className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-emerald-500/10"
-        >
-          + Registrar Movimiento
-        </button>
-        <button
-          onClick={() => setIsItemModalOpen(true)}
-          className="bg-slate-800 hover:bg-slate-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm border border-slate-700 transition"
-        >
-          + Agregar Rubro Estimado
-        </button>
-        <button
-          onClick={() => setIsBalanceModalOpen(true)}
-          className="bg-slate-800 hover:bg-slate-700 text-cyan-400 font-medium px-4 py-2.5 rounded-xl text-sm border border-slate-700 transition"
-        >
-          ✏️ Editar Saldo Inicial
-        </button>
-      </div>
-
-      {/* Modal: Registrar Movimiento */}
-      {isTxModalOpen && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-white">Nuevo Movimiento Real</h3>
-            <form onSubmit={handleAddTransaction} className="space-y-4">
-              <div>
-                <label className="text-xs text-slate-400 block mb-1">Monto ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-400 block mb-1">Descripción</label>
-                <input
-                  type="text"
-                  placeholder="Ej. Depósito, Despensa, Gasolina"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-400 block mb-1">Asignar a Rubro (Opcional)</label>
-                <select
-                  value={itemId}
-                  onChange={(e) => setItemId(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm"
-                >
-                  <option value="">Sin Asignar / Movimiento General</option>
-                  {budget.items?.map((item: any) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} ({item.type})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsTxModalOpen(false)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm"
-                >
-                  {loading ? 'Guardando...' : 'Guardar'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+    <div className="flex flex-wrap gap-3">
+      <button
+        onClick={() => setIsItemModalOpen(true)}
+        className="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-cyan-500/10"
+      >
+        + Agregar Rubro Estimado
+      </button>
+      <button
+        onClick={() => setIsBalanceModalOpen(true)}
+        className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-4 py-2.5 rounded-xl text-sm border border-slate-700 transition"
+      >
+        ✏️ Editar Saldo Inicial
+      </button>
 
       {/* Modal: Agregar Rubro Estimado */}
       {isItemModalOpen && (
@@ -215,7 +114,7 @@ export default function BudgetClient({ budget }: { budget: any }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm"
+                  className="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm"
                 >
                   {loading ? 'Guardando...' : 'Crear Rubro'}
                 </button>
@@ -253,9 +152,115 @@ export default function BudgetClient({ budget }: { budget: any }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm"
+                  className="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg text-sm"
                 >
                   Actualizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Componente de Acciones para la pestaña: Movimientos Reales
+export function RealTransactionActions({ budget }: { budget: any }) {
+  const [isTxModalOpen, setIsTxModalOpen] = useState(false)
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('')
+  const [itemId, setItemId] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleAddTransaction = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!amount) return
+    setLoading(true)
+
+    await createTransaction({
+      budgetId: budget.id,
+      budgetItemId: itemId || undefined,
+      amount: parseFloat(amount),
+      description,
+    })
+
+    setAmount('')
+    setDescription('')
+    setItemId('')
+    setIsTxModalOpen(false)
+    setLoading(false)
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setIsTxModalOpen(true)}
+        className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-amber-500/10"
+      >
+        + Registrar Movimiento Real
+      </button>
+
+      {/* Modal: Registrar Movimiento */}
+      {isTxModalOpen && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Nuevo Movimiento Real</h3>
+            <form onSubmit={handleAddTransaction} className="space-y-4">
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Monto ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Descripción</label>
+                <input
+                  type="text"
+                  placeholder="Ej. Depósito, Despensa, Gasolina"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Asignar a Rubro (Opcional)</label>
+                <select
+                  value={itemId}
+                  onChange={(e) => setItemId(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-amber-500 text-sm"
+                >
+                  <option value="">Sin Asignar / Movimiento General</option>
+                  {budget.items?.map((item: any) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name} ({item.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTxModalOpen(false)}
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm"
+                >
+                  {loading ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>
             </form>
