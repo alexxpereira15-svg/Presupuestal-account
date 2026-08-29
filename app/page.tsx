@@ -41,9 +41,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     return (
       <div className="max-w-xl mx-auto mt-12 p-6 bg-slate-800/80 border border-rose-500/50 rounded-2xl text-center space-y-4">
         <h2 className="text-xl font-bold text-rose-400">Error de conexión a la Base de Datos</h2>
-        <p className="text-sm text-slate-300">
-          La aplicación no pudo comunicarse con Neon PostgreSQL.
-        </p>
+        <p className="text-sm text-slate-300">La aplicación no pudo comunicarse con Neon PostgreSQL.</p>
         <div className="bg-slate-900 p-3 rounded-lg text-xs text-rose-300 font-mono text-left overflow-x-auto">
           {errorMessage}
         </div>
@@ -51,7 +49,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     )
   }
 
-  // Helper para filtrar rubros y calcular totales
   const items = budget.items || []
   const transactions = budget.transactions || []
 
@@ -87,33 +84,33 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const totalExpenseReal = fixedExpenses.totalReal + debts.totalReal + variableExpenses.totalReal + savings.totalReal
   const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
 
-  // Vista 1: Presupuesto Mensual
-  const monthlyBudgetView = (
-    <div className="space-y-8">
-      {/* Encabezado de Mes y Navegador */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/40 p-6 rounded-2xl border border-slate-800">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-white capitalize">
-              Presupuesto {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
-            </h2>
-          </div>
-          <p className="text-slate-400 text-sm">Control mensual estimado vs. real</p>
-        </div>
-
-        <div className="flex flex-col sm:items-end gap-2">
-          <MonthSelector currentYear={year} currentMonth={month} />
-
-          <div>
-            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold mr-2">Disponible:</span>
-            <span className={`text-2xl font-extrabold ${available >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              ${available.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-        </div>
+  // Componentes de Encabezado reutilizables
+  const HeaderInfo = () => (
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/40 p-6 rounded-2xl border border-slate-800 mb-6">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold text-white capitalize">
+          Presupuesto {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
+        </h2>
+        <p className="text-slate-400 text-sm">Cierre mensual y balance del período</p>
       </div>
 
-      {/* Grid de Resumen KPIs */}
+      <div className="flex flex-col sm:items-end gap-2">
+        <MonthSelector currentYear={year} currentMonth={month} />
+        <div>
+          <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold mr-2">Disponible Final:</span>
+          <span className={`text-2xl font-extrabold ${available >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            ${available.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+
+  // 1. Vista Dashboard
+  const dashboardView = (
+    <div className="space-y-6">
+      <HeaderInfo />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
           <span className="text-slate-400 text-sm font-medium">(+) Ingresos Reales</span>
@@ -130,33 +127,48 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
-          <span className="text-slate-400 text-sm font-medium">Saldo Inicial</span>
+          <span className="text-slate-400 text-sm font-medium">Saldo Inicial del Mes</span>
           <p className="text-2xl font-bold text-cyan-400 mt-1">
             ${Number(budget.initialBalance || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
         </div>
       </div>
 
-      {/* Botones de Acción / Modales */}
-      <BudgetClient budget={budget} />
-
-      {/* SECCIÓN DE TABLAS COMPARATIVAS POR CATEGORÍA */}
-      <div className="space-y-6">
-        <h3 className="text-xl font-bold text-white border-b border-slate-800 pb-2">
-          Desglose: Presupuestado vs. Real
-        </h3>
-
+      {/* Resumen Comparativo General */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-white">Resumen Estimado vs. Real</h3>
         <CategoryTable title="💵 Ingresos" data={incomes} isIncome />
-        <CategoryTable title="📌 Gastos Fijos y Facturas" data={fixedExpenses} />
+        <CategoryTable title="📌 Gastos Fijos" data={fixedExpenses} />
         <CategoryTable title="💳 Deudas y Créditos del Mes" data={debts} />
         <CategoryTable title="🛒 Gastos Variables" data={variableExpenses} />
         <CategoryTable title="📈 Ahorros e Inversiones" data={savings} />
       </div>
+    </div>
+  )
 
-      {/* Tabla de Movimientos Diarios */}
+  // 2. Vista Presupuesto Estimado
+  const estimatedBudgetView = (
+    <div className="space-y-6">
+      <HeaderInfo />
+      <BudgetClient budget={budget} />
+      <div className="space-y-4 pt-4">
+        <h3 className="text-lg font-bold text-white">Configuración de Rubros Estimados</h3>
+        <CategoryTable title="💵 Ingresos Estimados" data={incomes} isIncome />
+        <CategoryTable title="📌 Gastos Fijos Estimados" data={fixedExpenses} />
+        <CategoryTable title="💳 Deudas Estimadas del Mes" data={debts} />
+        <CategoryTable title="🛒 Gastos Variables Estimados" data={variableExpenses} />
+        <CategoryTable title="📈 Ahorros Estimados" data={savings} />
+      </div>
+    </div>
+  )
+
+  // 3. Vista Movimientos Reales
+  const transactionsView = (
+    <div className="space-y-6">
+      <HeaderInfo />
+      <BudgetClient budget={budget} />
       <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-white">Registro General de Movimientos Diarios</h3>
-        
+        <h3 className="text-lg font-semibold text-white">Registro Diario de Movimientos</h3>
         {(!transactions || transactions.length === 0) ? (
           <p className="text-slate-500 text-sm italic py-4 text-center">No hay movimientos registrados en este mes aún.</p>
         ) : (
@@ -193,15 +205,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     </div>
   )
 
-  // Vista 2: Deudas Globales
+  // 4. Vista Deudas Globales
   const globalDebtsView = <GlobalDebtsClient debts={globalDebts} userId={userId} />
 
-  // Vista 3: Resumen Anual
+  // 5. Vista Resumen Anual
   const annualSummaryView = annualSummary ? <AnnualSummaryClient summary={annualSummary} /> : null
 
   return (
     <TabsNavigation
-      monthlyBudgetView={monthlyBudgetView}
+      dashboardView={dashboardView}
+      estimatedBudgetView={estimatedBudgetView}
+      transactionsView={transactionsView}
       globalDebtsView={globalDebtsView}
       annualSummaryView={annualSummaryView}
     />
@@ -228,7 +242,7 @@ function CategoryTable({ title, data, isIncome = false }: { title: string; data:
               <tr>
                 <th className="px-5 py-2">Rubro</th>
                 <th className="px-5 py-2 text-right">Presupuestado</th>
-                <th className="px-5 py-2 text-right">Real (Pagado/Recibido)</th>
+                <th className="px-5 py-2 text-right">Real</th>
                 <th className="px-5 py-2 text-right">Diferencia</th>
               </tr>
             </thead>
