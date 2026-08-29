@@ -103,16 +103,18 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
   const grandPaid = debts.reduce((sum, d) => sum + Number(d.paidAmount), 0)
   const grandRemaining = grandTotal - grandPaid
 
-  // Helper para proyección de fecha de término
+  // Helper para proyección de fecha de término corregida
   const calculateProjection = (remaining: number, monthly: number) => {
     if (remaining <= 0) return '¡Liquidado!'
     if (monthly <= 0) return 'Sin abono programado'
 
     const monthsLeft = Math.ceil(remaining / monthly)
-    const targetDate = new Date()
-    targetDate.setMonth(targetDate.getMonth() + monthsLeft)
+    
+    // Usamos el día 1 del mes actual para evitar desbordamientos por días inexistentes (ej. 29/30/31)
+    const today = new Date()
+    const targetDate = new Date(today.getFullYear(), today.getMonth() + monthsLeft, 1)
 
-    const dateStr = targetDate.toLocaleDateString('es-MX', { month: 'short', year: 'numeric' })
+    const dateStr = targetDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })
     return `${monthsLeft} pagos (~ ${dateStr})`
   }
 
