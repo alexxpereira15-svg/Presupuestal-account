@@ -11,6 +11,8 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
   const [creditorName, setCreditorName] = useState('')
   const [totalAmount, setTotalAmount] = useState('')
   const [initialPaid, setInitialPaid] = useState('')
+  const [monthlyPayment, setMonthlyPayment] = useState('')
+  const [paymentType, setPaymentType] = useState<'FIXED' | 'VARIABLE'>('FIXED')
 
   const [paymentAmount, setPaymentAmount] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,11 +27,15 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
       creditorName,
       totalAmount: parseFloat(totalAmount),
       paidAmount: initialPaid ? parseFloat(initialPaid) : 0,
+      monthlyPayment: monthlyPayment ? parseFloat(monthlyPayment) : 0,
+      paymentType,
+      currentBudgetId,
     })
 
     setCreditorName('')
     setTotalAmount('')
     setInitialPaid('')
+    setMonthlyPayment('')
     setIsAddModalOpen(false)
     setLoading(false)
   }
@@ -65,7 +71,7 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
           <h3 className="text-xl font-black text-white flex items-center gap-2">
             <span>🏛️</span> Control de Deudas Globales
           </h3>
-          <p className="text-slate-400 text-xs font-medium">Seguimiento de saldos totales y abonos vinculados a tus movimientos</p>
+          <p className="text-slate-400 text-xs font-medium">Seguimiento de saldos totales y sincronización de pagos mensuales en el presupuesto</p>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
@@ -104,6 +110,7 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
             <thead className="text-[11px] uppercase tracking-wider bg-slate-950/60 text-slate-400 font-bold">
               <tr>
                 <th className="px-5 py-3.5 rounded-l-2xl">Acreedor / Concepto</th>
+                <th className="px-5 py-3.5 text-right">Pago Mensual Est.</th>
                 <th className="px-5 py-3.5 text-right">Monto Total</th>
                 <th className="px-5 py-3.5 text-right">Pagado</th>
                 <th className="px-5 py-3.5 text-right">Faltante</th>
@@ -116,11 +123,18 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
                 const total = Number(d.totalAmount)
                 const paid = Number(d.paidAmount)
                 const remaining = total - paid
+                const monthly = Number(d.monthlyPayment || 0)
                 const progressPct = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0
 
                 return (
                   <tr key={d.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-5 py-4 text-white font-bold">{d.creditorName}</td>
+                    <td className="px-5 py-4 text-right font-mono text-cyan-400">
+                      ${monthly.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      <span className="text-[10px] block text-slate-500 font-normal">
+                        {d.paymentType === 'FIXED' ? 'Fijo' : 'Variable'}
+                      </span>
+                    </td>
                     <td className="px-5 py-4 text-right font-mono">${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 text-right font-mono text-emerald-400">${paid.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 text-right font-mono text-rose-400 font-black">${remaining.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
@@ -158,45 +172,79 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
         </div>
       )}
 
-      {/* Modal: Agregar Deuda */}
+      {/* Modal: Agregar Deuda con Configuración de Pago Mensual */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl w-full max-w-md space-y-4 shadow-2xl">
             <h3 className="text-lg font-bold text-white">Nueva Deuda / Crédito Global</h3>
             <form onSubmit={handleCreateDebt} className="space-y-4">
               <div>
-                <label className="text-xs text-slate-400 font-bold block mb-1">Nombre (ej. Auto, Liverpool)</label>
+                <label className="text-xs text-slate-400 font-bold block mb-1">Nombre (ej. Auto, Tarjeta Santander)</label>
                 <input
                   type="text"
                   required
+                  placeholder="Ej. Tarjeta Crédito Santander"
                   value={creditorName}
                   onChange={(e) => setCreditorName(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"
                 />
               </div>
 
-              <div>
-                <label className="text-xs text-slate-400 font-bold block mb-1">Monto Total ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={totalAmount}
-                  onChange={(e) => setTotalAmount(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-400 font-bold block mb-1">Monto Total ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="40000"
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 font-bold block mb-1">Pagado Inicial ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={initialPaid}
+                    onChange={(e) => setInitialPaid(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="text-xs text-slate-400 font-bold block mb-1">Monto Pagado Inicialmente ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={initialPaid}
-                  onChange={(e) => setInitialPaid(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono"
-                />
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                <div>
+                  <label className="text-xs text-cyan-400 font-bold block mb-1">Pago Mensual Est. ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="5000"
+                    value={monthlyPayment}
+                    onChange={(e) => setMonthlyPayment(e.target.value)}
+                    className="w-full bg-slate-950 border border-cyan-500/50 rounded-xl p-3 text-white font-mono font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 font-bold block mb-1">Tipo de Pago</label>
+                  <select
+                    value={paymentType}
+                    onChange={(e) => setPaymentType(e.target.value as any)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-xs cursor-pointer"
+                  >
+                    <option value="FIXED">📌 Fijo</option>
+                    <option value="VARIABLE">🛒 Variable (Aprox)</option>
+                  </select>
+                </div>
               </div>
+
+              <p className="text-[11px] text-slate-400 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                ℹ️ Al guardar, el pago mensual estimado se agregará automáticamente al **Presupuesto Estimado** de este mes en la categoría de **Deudas**.
+              </p>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
@@ -209,7 +257,7 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm"
+                  className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow-lg shadow-indigo-600/30"
                 >
                   {loading ? 'Guardando...' : 'Crear Registro'}
                 </button>
