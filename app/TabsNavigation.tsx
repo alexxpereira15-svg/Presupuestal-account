@@ -3,31 +3,57 @@
 import { useState } from 'react'
 
 interface TabsNavigationProps {
-  monthlyBudgetView: React.ReactNode
+  dashboardView: React.ReactNode
+  estimatedBudgetView: React.ReactNode
+  transactionsView: React.ReactNode
   globalDebtsView: React.ReactNode
   annualSummaryView: React.ReactNode
 }
 
 export default function TabsNavigation({
-  monthlyBudgetView,
+  dashboardView,
+  estimatedBudgetView,
+  transactionsView,
   globalDebtsView,
   annualSummaryView,
 }: TabsNavigationProps) {
-  const [activeTab, setActiveTab] = useState<'budget' | 'debts' | 'annual'>('budget')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'estimated' | 'txs' | 'debts' | 'annual'>('dashboard')
 
   return (
     <div className="space-y-6">
-      {/* Barra de Navegación de Pestañas */}
-      <div className="flex border-b border-slate-800 space-x-2 sm:space-x-4 overflow-x-auto pb-[1px]">
+      {/* Barra Superior de Módulos */}
+      <div className="flex border-b border-slate-800 space-x-1 sm:space-x-2 overflow-x-auto pb-[1px]">
         <button
-          onClick={() => setActiveTab('budget')}
+          onClick={() => setActiveTab('dashboard')}
           className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition whitespace-nowrap ${
-            activeTab === 'budget'
+            activeTab === 'dashboard'
               ? 'border-emerald-400 text-emerald-400 bg-slate-800/40 rounded-t-xl'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
           }`}
         >
-          📊 Presupuesto Mensual
+          📊 Dashboard
+        </button>
+
+        <button
+          onClick={() => setActiveTab('estimated')}
+          className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition whitespace-nowrap ${
+            activeTab === 'estimated'
+              ? 'border-cyan-400 text-cyan-400 bg-slate-800/40 rounded-t-xl'
+              : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+          }`}
+        >
+          📝 Presupuesto Estimado
+        </button>
+
+        <button
+          onClick={() => setActiveTab('txs')}
+          className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition whitespace-nowrap ${
+            activeTab === 'txs'
+              ? 'border-amber-400 text-amber-400 bg-slate-800/40 rounded-t-xl'
+              : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+          }`}
+        >
+          💸 Movimientos Reales
         </button>
 
         <button
@@ -38,14 +64,14 @@ export default function TabsNavigation({
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
           }`}
         >
-          🏛️ Deudas Globales (Hoja 1)
+          🏛️ Deudas Globales
         </button>
 
         <button
           onClick={() => setActiveTab('annual')}
           className={`flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition whitespace-nowrap ${
             activeTab === 'annual'
-              ? 'border-cyan-400 text-cyan-400 bg-slate-800/40 rounded-t-xl'
+              ? 'border-purple-400 text-purple-400 bg-slate-800/40 rounded-t-xl'
               : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
           }`}
         >
@@ -53,9 +79,11 @@ export default function TabsNavigation({
         </button>
       </div>
 
-      {/* Contenido Dinámico según la Pestaña Seleccionada */}
+      {/* Contenido por Módulo */}
       <div>
-        {activeTab === 'budget' && monthlyBudgetView}
+        {activeTab === 'dashboard' && dashboardView}
+        {activeTab === 'estimated' && estimatedBudgetView}
+        {activeTab === 'txs' && transactionsView}
         {activeTab === 'debts' && globalDebtsView}
         {activeTab === 'annual' && annualSummaryView}
       </div>
