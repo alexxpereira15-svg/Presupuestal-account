@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createGlobalDebt, addPaymentToDebt, deleteGlobalDebt } from './actions/debt'
 
-export default function GlobalDebtsClient({ debts, userId }: { debts: any[]; userId: string }) {
+export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { debts: any[]; userId: string; currentBudgetId?: string }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isPayModalOpen, setIsPayModalOpen] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState<any>(null)
@@ -37,10 +37,10 @@ export default function GlobalDebtsClient({ debts, userId }: { debts: any[]; use
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedDebt || !paymentAmount) return
-    if (!confirm(`¿Confirmas realizar un abono de $${paymentAmount} a "${selectedDebt.creditorName}"?`)) return
+    if (!confirm(`¿Confirmas abonar $${paymentAmount} a "${selectedDebt.creditorName}" y vincularlo a tus movimientos de este mes?`)) return
     setLoading(true)
 
-    await addPaymentToDebt(selectedDebt.id, parseFloat(paymentAmount))
+    await addPaymentToDebt(selectedDebt.id, parseFloat(paymentAmount), currentBudgetId)
 
     setPaymentAmount('')
     setSelectedDebt(null)
@@ -49,7 +49,7 @@ export default function GlobalDebtsClient({ debts, userId }: { debts: any[]; use
   }
 
   const handleDelete = async (debt: any) => {
-    if (confirm(`¿Estás seguro de que deseas ELIMINAR el registro de deuda de "${debt.creditorName}"?`)) {
+    if (confirm(`¿Estás seguro de que deseas ELIMINAR la deuda de "${debt.creditorName}"?`)) {
       await deleteGlobalDebt(debt.id)
     }
   }
@@ -65,7 +65,7 @@ export default function GlobalDebtsClient({ debts, userId }: { debts: any[]; use
           <h3 className="text-xl font-black text-white flex items-center gap-2">
             <span>🏛️</span> Control de Deudas Globales
           </h3>
-          <p className="text-slate-400 text-xs font-medium">Seguimiento de saldos totales y abonos acumulados</p>
+          <p className="text-slate-400 text-xs font-medium">Seguimiento de saldos totales y abonos vinculados a tus movimientos</p>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
@@ -160,7 +160,7 @@ export default function GlobalDebtsClient({ debts, userId }: { debts: any[]; use
 
       {/* Modal: Agregar Deuda */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl w-full max-w-md space-y-4 shadow-2xl">
             <h3 className="text-lg font-bold text-white">Nueva Deuda / Crédito Global</h3>
             <form onSubmit={handleCreateDebt} className="space-y-4">
@@ -221,7 +221,7 @@ export default function GlobalDebtsClient({ debts, userId }: { debts: any[]; use
 
       {/* Modal: Registrar Abono */}
       {isPayModalOpen && selectedDebt && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl w-full max-w-sm space-y-4 shadow-2xl">
             <h3 className="text-lg font-bold text-white">Abono a: {selectedDebt.creditorName}</h3>
             <form onSubmit={handleAddPayment} className="space-y-4">
