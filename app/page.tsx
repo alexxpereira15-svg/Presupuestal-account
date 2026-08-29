@@ -1,7 +1,7 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
 import { getGlobalDebts } from './actions/debt'
 import { getAnnualSummary } from './actions/annual'
-import BudgetClient from './BudgetClient'
+import { EstimatedBudgetActions, RealTransactionActions } from './BudgetClient'
 import MonthSelector from './MonthSelector'
 import GlobalDebtsClient from './GlobalDebtsClient'
 import AnnualSummaryClient from './AnnualSummaryClient'
@@ -84,33 +84,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const totalExpenseReal = fixedExpenses.totalReal + debts.totalReal + variableExpenses.totalReal + savings.totalReal
   const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
 
-  // Componentes de Encabezado reutilizables
-  const HeaderInfo = () => (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/40 p-6 rounded-2xl border border-slate-800 mb-6">
-      <div className="space-y-1">
-        <h2 className="text-2xl font-bold text-white capitalize">
-          Presupuesto {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
-        </h2>
-        <p className="text-slate-400 text-sm">Cierre mensual y balance del período</p>
-      </div>
-
-      <div className="flex flex-col sm:items-end gap-2">
-        <MonthSelector currentYear={year} currentMonth={month} />
-        <div>
-          <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold mr-2">Disponible Final:</span>
-          <span className={`text-2xl font-extrabold ${available >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            ${available.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-      </div>
-    </div>
-  )
-
   // 1. Vista Dashboard
   const dashboardView = (
     <div className="space-y-6">
-      <HeaderInfo />
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
           <span className="text-slate-400 text-sm font-medium">(+) Ingresos Reales</span>
@@ -134,7 +110,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </div>
 
-      {/* Resumen Comparativo General */}
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-white">Resumen Estimado vs. Real</h3>
         <CategoryTable title="💵 Ingresos" data={incomes} isIncome />
@@ -149,9 +124,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // 2. Vista Presupuesto Estimado
   const estimatedBudgetView = (
     <div className="space-y-6">
-      <HeaderInfo />
-      <BudgetClient budget={budget} />
-      <div className="space-y-4 pt-4">
+      {/* Botones exclusivos de Presupuesto Estimado */}
+      <EstimatedBudgetActions budget={budget} />
+
+      <div className="space-y-4 pt-2">
         <h3 className="text-lg font-bold text-white">Configuración de Rubros Estimados</h3>
         <CategoryTable title="💵 Ingresos Estimados" data={incomes} isIncome />
         <CategoryTable title="📌 Gastos Fijos Estimados" data={fixedExpenses} />
@@ -165,8 +141,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // 3. Vista Movimientos Reales
   const transactionsView = (
     <div className="space-y-6">
-      <HeaderInfo />
-      <BudgetClient budget={budget} />
+      {/* Botón exclusivo de Registro Real */}
+      <RealTransactionActions budget={budget} />
+
       <div className="bg-slate-800/30 rounded-2xl border border-slate-800 p-6 space-y-4">
         <h3 className="text-lg font-semibold text-white">Registro Diario de Movimientos</h3>
         {(!transactions || transactions.length === 0) ? (
@@ -212,13 +189,36 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const annualSummaryView = annualSummary ? <AnnualSummaryClient summary={annualSummary} /> : null
 
   return (
-    <TabsNavigation
-      dashboardView={dashboardView}
-      estimatedBudgetView={estimatedBudgetView}
-      transactionsView={transactionsView}
-      globalDebtsView={globalDebtsView}
-      annualSummaryView={annualSummaryView}
-    />
+    <div className="space-y-6">
+      {/* Selector Global de Mes y Disponible Fijo */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/40 p-6 rounded-2xl border border-slate-800">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold text-white capitalize">
+            {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
+          </h2>
+          <p className="text-slate-400 text-sm">Selecciona el mes global para filtrar la información</p>
+        </div>
+
+        <div className="flex flex-col sm:items-end gap-2">
+          <MonthSelector currentYear={year} currentMonth={month} />
+          <div>
+            <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold mr-2">Disponible del Mes:</span>
+            <span className={`text-2xl font-extrabold ${available >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              ${available.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navegación por Módulos */}
+      <TabsNavigation
+        dashboardView={dashboardView}
+        estimatedBudgetView={estimatedBudgetView}
+        transactionsView={transactionsView}
+        globalDebtsView={globalDebtsView}
+        annualSummaryView={annualSummaryView}
+      />
+    </div>
   )
 }
 
