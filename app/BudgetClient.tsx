@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createTransaction } from './actions/transaction'
-import { addBudgetItem, updateInitialBalance } from './actions/budget'
+import { createTransaction, updateTransaction, deleteTransaction } from './actions/transaction'
+import { addBudgetItem, updateBudgetItem, deleteBudgetItem, updateInitialBalance } from './actions/budget'
 
 // Acciones para Presupuesto Estimado
 export function EstimatedBudgetActions({ budget }: { budget: any }) {
@@ -36,6 +36,7 @@ export function EstimatedBudgetActions({ budget }: { budget: any }) {
 
   const handleUpdateBalance = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!confirm('¿Confirmas que deseas actualizar el saldo inicial de este mes?')) return
     setLoading(true)
     await updateInitialBalance(budget.id, parseFloat(initialBalance || '0'))
     setIsBalanceModalOpen(false)
@@ -279,6 +280,232 @@ export function RealTransactionActions({ budget }: { budget: any }) {
                   className="bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black px-6 py-3 rounded-xl text-sm shadow-lg shadow-amber-500/20"
                 >
                   {loading ? 'Guardando...' : 'Guardar Movimiento'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Editar y Eliminar Rubro Estimado
+export function ItemRowActions({ item }: { item: any }) {
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [name, setName] = useState(item.name)
+  const [type, setType] = useState(item.type)
+  const [estimatedAmount, setEstimatedAmount] = useState(item.estimatedAmount.toString())
+  const [loading, setLoading] = useState(false)
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!confirm(`¿Deseas guardar los cambios para el rubro "${item.name}"?`)) return
+    setLoading(true)
+    await updateBudgetItem(item.id, {
+      name,
+      type: type as any,
+      estimatedAmount: parseFloat(estimatedAmount),
+    })
+    setIsEditOpen(false)
+    setLoading(false)
+  }
+
+  const handleDelete = async () => {
+    if (confirm(`¿Estás seguro de que deseas ELIMINAR el rubro "${item.name}"? Esta acción no se puede deshacer.`)) {
+      setLoading(true)
+      await deleteBudgetItem(item.id)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <button
+        onClick={() => setIsEditOpen(true)}
+        className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-md transition"
+        title="Editar rubro"
+      >
+        ✏️
+      </button>
+      <button
+        onClick={handleDelete}
+        className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-md transition"
+        title="Eliminar rubro"
+      >
+        🗑️
+      </button>
+
+      {isEditOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 text-left font-normal">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl w-full max-w-md space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Editar Rubro Estimado</h3>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="text-xs text-slate-400 font-bold block mb-1">Nombre</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 font-bold block mb-1">Categoría</label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-sm"
+                >
+                  <option value="INCOME">💵 Ingreso</option>
+                  <option value="FIXED_EXPENSE">📌 Gasto Fijo / Factura</option>
+                  <option value="DEBT">💳 Deuda / Crédito</option>
+                  <option value="VARIABLE_EXPENSE">🛒 Gasto Variable</option>
+                  <option value="SAVING_INVESTMENT">📈 Ahorro / Inversión</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 font-bold block mb-1">Monto Presupuestado ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={estimatedAmount}
+                  onChange={(e) => setEstimatedAmount(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono font-bold"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditOpen(false)}
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm"
+                >
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Editar y Eliminar Movimiento Real
+export function TransactionRowActions({ transaction, budgetItems }: { transaction: any; budgetItems: any[] }) {
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [description, setDescription] = useState(transaction.description || '')
+  const [amount, setAmount] = useState(transaction.amount.toString())
+  const [budgetItemId, setBudgetItemId] = useState(transaction.budgetItemId || '')
+  const [loading, setLoading] = useState(false)
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!confirm('¿Deseas guardar los cambios de este movimiento real?')) return
+    setLoading(true)
+    await updateTransaction(transaction.id, {
+      description,
+      amount: parseFloat(amount),
+      budgetItemId: budgetItemId || undefined,
+    })
+    setIsEditOpen(false)
+    setLoading(false)
+  }
+
+  const handleDelete = async () => {
+    if (confirm('¿Estás seguro de que deseas ELIMINAR este movimiento registrado?')) {
+      setLoading(true)
+      await deleteTransaction(transaction.id)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <button
+        onClick={() => setIsEditOpen(true)}
+        className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-md transition"
+        title="Editar movimiento"
+      >
+        ✏️
+      </button>
+      <button
+        onClick={handleDelete}
+        className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-md transition"
+        title="Eliminar movimiento"
+      >
+        🗑️
+      </button>
+
+      {isEditOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 text-left font-normal">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl w-full max-w-md space-y-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Editar Movimiento Real</h3>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="text-xs text-slate-400 font-bold block mb-1">Monto ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white font-mono font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 font-bold block mb-1">Descripción</label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 font-bold block mb-1">Rubro Asignado</label>
+                <select
+                  value={budgetItemId}
+                  onChange={(e) => setBudgetItemId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white text-sm"
+                >
+                  <option value="">Sin Asignar / Movimiento General</option>
+                  {budgetItems?.map((item: any) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name} ({item.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditOpen(false)}
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm"
+                >
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
             </form>
