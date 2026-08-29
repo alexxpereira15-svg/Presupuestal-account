@@ -244,7 +244,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     </div>
   )
 
-  const globalDebtsView = <GlobalDebtsClient debts={globalDebts} userId={userId} />
+  const globalDebtsView = <GlobalDebtsClient debts={globalDebts} userId={userId} currentBudgetId={budget.id} />
   const annualSummaryView = annualSummary ? <AnnualSummaryClient summary={annualSummary} /> : null
 
   return (
