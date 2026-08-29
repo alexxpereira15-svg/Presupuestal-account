@@ -30,7 +30,7 @@ export async function createGlobalDebt(data: {
     },
   })
 
-  // Si tenemos el ID del presupuesto mensual activo, creamos automáticamente el Rubro Estimado
+  // Sincronizar con el presupuesto mensual si está abierto
   if (data.currentBudgetId && data.monthlyPayment > 0) {
     const existingItem = await prisma.budgetItem.findFirst({
       where: {
@@ -56,6 +56,28 @@ export async function createGlobalDebt(data: {
   return debt
 }
 
+// Editar Deuda Global
+export async function updateGlobalDebt(id: string, data: {
+  creditorName: string
+  totalAmount: number
+  paidAmount: number
+  monthlyPayment: number
+  paymentType: 'FIXED' | 'VARIABLE'
+}) {
+  const updated = await prisma.globalDebt.update({
+    where: { id },
+    data: {
+      creditorName: data.creditorName,
+      totalAmount: data.totalAmount,
+      paidAmount: data.paidAmount,
+      monthlyPayment: data.monthlyPayment,
+      paymentType: data.paymentType,
+    },
+  })
+  revalidatePath('/')
+  return updated
+}
+
 export async function addPaymentToDebt(debtId: string, amount: number, budgetId?: string) {
   const debt = await prisma.globalDebt.findUnique({ where: { id: debtId } })
   if (!debt) throw new Error('Deuda no encontrada')
@@ -67,7 +89,6 @@ export async function addPaymentToDebt(debtId: string, amount: number, budgetId?
     data: { paidAmount: newPaidAmount },
   })
 
-  // Vincular al rubro de presupuesto del mes si existe
   if (budgetId) {
     const budgetItem = await prisma.budgetItem.findFirst({
       where: {
