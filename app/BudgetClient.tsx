@@ -4,6 +4,14 @@ import { useState } from 'react'
 import { createTransaction, updateTransaction, deleteTransaction } from './actions/transaction'
 import { addBudgetItem, updateBudgetItem, deleteBudgetItem, updateInitialBalance } from './actions/budget'
 
+const CATEGORY_LABELS: Record<string, string> = {
+  INCOME: 'Ingreso',
+  FIXED_EXPENSE: 'Gasto Fijo',
+  DEBT: 'Deuda',
+  VARIABLE_EXPENSE: 'Gasto Variable',
+  SAVING_INVESTMENT: 'Ahorro / Inversión',
+}
+
 // Acciones para Presupuesto Estimado
 export function EstimatedBudgetActions({ budget }: { budget: any }) {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false)
@@ -260,7 +268,7 @@ export function RealTransactionActions({ budget }: { budget: any }) {
                   <option value="">Sin Asignar / Movimiento General</option>
                   {budget.items?.map((item: any) => (
                     <option key={item.id} value={item.id}>
-                      {item.name} ({item.type})
+                      {item.name} ({CATEGORY_LABELS[item.type] || item.type})
                     </option>
                   ))}
                 </select>
@@ -290,7 +298,7 @@ export function RealTransactionActions({ budget }: { budget: any }) {
   )
 }
 
-// Editar y Eliminar Rubro Estimado
+// Editar y Eliminar Rubro Estimado (Modal corregido fuera del contenedor de la card)
 export function ItemRowActions({ item }: { item: any }) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [name, setName] = useState(item.name)
@@ -320,24 +328,26 @@ export function ItemRowActions({ item }: { item: any }) {
   }
 
   return (
-    <div className="flex items-center justify-end gap-2">
-      <button
-        onClick={() => setIsEditOpen(true)}
-        className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-md transition"
-        title="Editar rubro"
-      >
-        ✏️
-      </button>
-      <button
-        onClick={handleDelete}
-        className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-md transition"
-        title="Eliminar rubro"
-      >
-        🗑️
-      </button>
+    <>
+      <div className="flex items-center justify-end gap-2">
+        <button
+          onClick={() => setIsEditOpen(true)}
+          className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-md transition"
+          title="Editar rubro"
+        >
+          ✏️
+        </button>
+        <button
+          onClick={handleDelete}
+          className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-md transition"
+          title="Eliminar rubro"
+        >
+          🗑️
+        </button>
+      </div>
 
       {isEditOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 text-left font-normal">
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 text-left font-normal">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl w-full max-w-md space-y-4 shadow-2xl">
             <h3 className="text-lg font-bold text-white">Editar Rubro Estimado</h3>
             <form onSubmit={handleUpdate} className="space-y-4">
@@ -383,7 +393,7 @@ export function ItemRowActions({ item }: { item: any }) {
                 <button
                   type="button"
                   onClick={() => setIsEditOpen(false)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white font-bold"
                 >
                   Cancelar
                 </button>
@@ -399,7 +409,7 @@ export function ItemRowActions({ item }: { item: any }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
@@ -433,24 +443,26 @@ export function TransactionRowActions({ transaction, budgetItems }: { transactio
   }
 
   return (
-    <div className="flex items-center justify-end gap-2">
-      <button
-        onClick={() => setIsEditOpen(true)}
-        className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-md transition"
-        title="Editar movimiento"
-      >
-        ✏️
-      </button>
-      <button
-        onClick={handleDelete}
-        className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-md transition"
-        title="Eliminar movimiento"
-      >
-        🗑️
-      </button>
+    <>
+      <div className="flex items-center justify-end gap-2">
+        <button
+          onClick={() => setIsEditOpen(true)}
+          className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-md transition"
+          title="Editar movimiento"
+        >
+          ✏️
+        </button>
+        <button
+          onClick={handleDelete}
+          className="px-2 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-md transition"
+          title="Eliminar movimiento"
+        >
+          🗑️
+        </button>
+      </div>
 
       {isEditOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 text-left font-normal">
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 text-left font-normal">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl w-full max-w-md space-y-4 shadow-2xl">
             <h3 className="text-lg font-bold text-white">Editar Movimiento Real</h3>
             <form onSubmit={handleUpdate} className="space-y-4">
@@ -486,7 +498,7 @@ export function TransactionRowActions({ transaction, budgetItems }: { transactio
                   <option value="">Sin Asignar / Movimiento General</option>
                   {budgetItems?.map((item: any) => (
                     <option key={item.id} value={item.id}>
-                      {item.name} ({item.type})
+                      {item.name} ({CATEGORY_LABELS[item.type] || item.type})
                     </option>
                   ))}
                 </select>
@@ -496,7 +508,7 @@ export function TransactionRowActions({ transaction, budgetItems }: { transactio
                 <button
                   type="button"
                   onClick={() => setIsEditOpen(false)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white font-bold"
                 >
                   Cancelar
                 </button>
@@ -512,6 +524,6 @@ export function TransactionRowActions({ transaction, budgetItems }: { transactio
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
