@@ -3,7 +3,21 @@
 import { useState } from 'react'
 import { createGlobalDebt, addPaymentToDebt, deleteGlobalDebt, updateGlobalDebt } from './actions/debt'
 
-export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { debts: any[]; userId: string; currentBudgetId?: string }) {
+interface GlobalDebtsClientProps {
+  debts: any[]
+  userId: string
+  currentBudgetId?: string
+  currentYear?: number
+  currentMonth?: number
+}
+
+export default function GlobalDebtsClient({
+  debts,
+  userId,
+  currentBudgetId,
+  currentYear,
+  currentMonth,
+}: GlobalDebtsClientProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isPayModalOpen, setIsPayModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -103,16 +117,19 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
   const grandPaid = debts.reduce((sum, d) => sum + Number(d.paidAmount), 0)
   const grandRemaining = grandTotal - grandPaid
 
-  // Helper para proyección de fecha de término corregida
+  // Helper para proyección de fecha de término basado en el período seleccionado en la App
   const calculateProjection = (remaining: number, monthly: number) => {
     if (remaining <= 0) return '¡Liquidado!'
     if (monthly <= 0) return 'Sin abono programado'
 
     const monthsLeft = Math.ceil(remaining / monthly)
-    
-    // Usamos el día 1 del mes actual para evitar desbordamientos por días inexistentes (ej. 29/30/31)
-    const today = new Date()
-    const targetDate = new Date(today.getFullYear(), today.getMonth() + monthsLeft, 1)
+
+    // Base de cálculo tomada del período activo en el selector global
+    const baseYear = currentYear || new Date().getFullYear()
+    const baseMonth = currentMonth ? currentMonth - 1 : new Date().getMonth()
+
+    // Se fuerza el día 1 para evitar desbordamiento por meses de menos días (ej. Febrero)
+    const targetDate = new Date(baseYear, baseMonth + monthsLeft, 1)
 
     const dateStr = targetDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })
     return `${monthsLeft} pagos (~ ${dateStr})`
@@ -129,7 +146,7 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-3 rounded-2xl text-xs transition shadow-lg shadow-indigo-600/30"
+          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-3 rounded-2xl text-xs transition shadow-lg shadow-indigo-600/30 cursor-pointer"
         >
           + Nueva Deuda Global
         </button>
@@ -193,7 +210,7 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
                     <td className="px-5 py-4 text-right font-mono text-emerald-400">${paid.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 text-right font-mono text-rose-400 font-black">${remaining.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                     <td className="px-5 py-4 text-center">
-                      <span className="inline-block px-2.5 py-1 rounded-full bg-slate-800 text-[11px] text-slate-300 border border-slate-700/60 font-mono">
+                      <span className="inline-block px-2.5 py-1 rounded-full bg-slate-800 text-[11px] text-slate-300 border border-slate-700/60 font-mono capitalize">
                         {projectionText}
                       </span>
                     </td>
@@ -203,21 +220,21 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
                           setSelectedDebt(d)
                           setIsPayModalOpen(true)
                         }}
-                        className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-xl transition border border-emerald-500/30"
+                        className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-xl transition border border-emerald-500/30 cursor-pointer"
                         title="Registrar Abono"
                       >
                         + Abono
                       </button>
                       <button
                         onClick={() => handleOpenEdit(d)}
-                        className="bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-bold px-2 py-1 rounded-xl transition"
+                        className="bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-bold px-2 py-1 rounded-xl transition cursor-pointer"
                         title="Editar Deuda"
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => handleDelete(d)}
-                        className="bg-slate-800 hover:bg-slate-700 text-rose-400 text-xs font-bold px-2 py-1 rounded-xl transition"
+                        className="bg-slate-800 hover:bg-slate-700 text-rose-400 text-xs font-bold px-2 py-1 rounded-xl transition cursor-pointer"
                         title="Eliminar Deuda"
                       >
                         🗑️
@@ -305,14 +322,14 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white font-bold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm"
+                  className="bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow-lg shadow-indigo-600/30"
                 >
                   {loading ? 'Guardando...' : 'Crear Registro'}
                 </button>
@@ -393,7 +410,7 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white font-bold"
                 >
                   Cancelar
                 </button>
@@ -431,7 +448,7 @@ export default function GlobalDebtsClient({ debts, userId, currentBudgetId }: { 
                 <button
                   type="button"
                   onClick={() => setIsPayModalOpen(false)}
-                  className="px-4 py-2 text-sm text-slate-400 hover:text-white"
+                  className="px-4 py-2 text-sm text-slate-400 hover:text-white font-bold"
                 >
                   Cancelar
                 </button>
