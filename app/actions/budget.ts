@@ -12,15 +12,12 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
     include: {
       items: true,
       transactions: {
-        include: {
-          budgetItem: true,
-        },
+        include: { budgetItem: true },
         orderBy: { date: 'desc' },
       },
     },
   })
 
-  // Si el mes no existe, calculamos el saldo final del mes anterior
   if (!budget) {
     let prevMonth = month - 1
     let prevYear = year
@@ -35,9 +32,7 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
       },
       include: {
         items: true,
-        transactions: {
-          include: { budgetItem: true },
-        },
+        transactions: { include: { budgetItem: true } },
       },
     })
 
@@ -68,9 +63,7 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
       },
       include: {
         items: true,
-        transactions: {
-          include: { budgetItem: true },
-        },
+        transactions: { include: { budgetItem: true } },
       },
     })
   }
@@ -94,6 +87,29 @@ export async function addBudgetItem(data: {
   })
   revalidatePath('/')
   return item
+}
+
+// Editar rubro estimado
+export async function updateBudgetItem(id: string, data: { name: string; type: CategoryType; estimatedAmount: number }) {
+  const updated = await prisma.budgetItem.update({
+    where: { id },
+    data: {
+      name: data.name,
+      type: data.type,
+      estimatedAmount: data.estimatedAmount,
+    },
+  })
+  revalidatePath('/')
+  return updated
+}
+
+// Eliminar rubro estimado
+export async function deleteBudgetItem(id: string) {
+  const deleted = await prisma.budgetItem.delete({
+    where: { id },
+  })
+  revalidatePath('/')
+  return deleted
 }
 
 export async function updateInitialBalance(budgetId: string, amount: number) {
