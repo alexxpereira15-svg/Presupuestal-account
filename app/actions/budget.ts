@@ -18,6 +18,7 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
     },
   })
 
+  // Si el presupuesto del mes no existe, lo creamos
   if (!budget) {
     let prevMonth = month - 1
     let prevYear = year
@@ -39,7 +40,6 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
     let calculatedInitialBalance = 0
 
     if (prevBudget) {
-      const prevItems = prevBudget.items || []
       const prevTxs = prevBudget.transactions || []
 
       const prevIncome = prevTxs
@@ -68,6 +68,34 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
     })
   }
 
+  // --- REVISIÓN Y CLONADO AUTOMÁTICO DE DEUDAS FIJAS VIGENTES ---
+  const activeDebts = await prisma.globalDebt.findMany({
+    where: { userId },
+  })
+
+  for (const debt of activeDebts) {
+    const remaining = Number(debt.totalAmount) - Number(debt.paidAmount)
+    const monthlyPayment = Number(debt.monthlyPayment)
+
+    // Si la deuda tiene saldo pendiente y un pago mensual mayor a 0
+    if (remaining > 0 && monthlyPayment > 0) {
+      const existingItem = budget.items.find((item) => item.name === debt.creditorName && item.type === 'DEBT')
+
+      if (!existingItem) {
+        // En pagos fijos se pone el pago completo, en variables se pone el estimado pero siempre se migra la cuota base
+        const newItem = await prisma.budgetItem.create({
+          data: {
+            budgetId: budget.id,
+            name: debt.creditorName,
+            type: 'DEBT',
+            estimatedAmount: monthlyPayment,
+          },
+        })
+        budget.items.push(newItem)
+      }
+    }
+  }
+
   return budget
 }
 
@@ -89,7 +117,6 @@ export async function addBudgetItem(data: {
   return item
 }
 
-// Editar rubro estimado
 export async function updateBudgetItem(id: string, data: { name: string; type: CategoryType; estimatedAmount: number }) {
   const updated = await prisma.budgetItem.update({
     where: { id },
@@ -103,7 +130,6 @@ export async function updateBudgetItem(id: string, data: { name: string; type: C
   return updated
 }
 
-// Eliminar rubro estimado
 export async function deleteBudgetItem(id: string) {
   const deleted = await prisma.budgetItem.delete({
     where: { id },
