@@ -24,6 +24,7 @@ export default function TabsNavigation({
     { id: 'estimated', label: 'Presupuesto', icon: '📝' },
     { id: 'txs', label: 'Movimientos', icon: '💸' },
     { id: 'debts', label: 'Deudas', icon: '💳' },
+    { id: 'savingGoals', label: '🚀 Metas de Ahorro', icon: '🎯' }
     { id: 'annual', label: 'Resumen Anual', icon: '📊' },
   ]
 
