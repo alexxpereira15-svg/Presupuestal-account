@@ -30,12 +30,10 @@ export async function createSavingGoal(data: {
     },
   })
 
-  // Calcular impacto mensual estimado según frecuencia
   let monthlyEstimate = data.periodAmount
   if (data.frequency === 'FORTNIGHTLY') monthlyEstimate = data.periodAmount * 2
   if (data.frequency === 'WEEKLY') monthlyEstimate = data.periodAmount * 4
 
-  // Si tenemos el presupuesto abierto, sincronizamos con la categoría SAVING_INVESTMENT
   if (data.currentBudgetId && monthlyEstimate > 0) {
     const existingItem = await prisma.budgetItem.findFirst({
       where: {
@@ -93,7 +91,6 @@ export async function addContributionToGoal(goalId: string, amount: number, budg
     data: { savedAmount: newSavedAmount },
   })
 
-  // Vincular con la bitácora de movimientos reales en la categoría de Ahorro / Inversión
   if (budgetId) {
     const budgetItem = await prisma.budgetItem.findFirst({
       where: {
