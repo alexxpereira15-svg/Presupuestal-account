@@ -1,12 +1,14 @@
 import { getOrCreateMonthlyBudget } from './actions/budget'
 import { getGlobalDebts } from './actions/debt'
 import { getAnnualSummary } from './actions/annual'
+import { getSavingGoals } from './actions/goal'
 import { EstimatedBudgetActions, RealTransactionActions, ItemRowActions, TransactionRowActions } from './BudgetClient'
 import MonthSelector from './MonthSelector'
 import GlobalDebtsClient from './GlobalDebtsClient'
 import AnnualSummaryClient from './AnnualSummaryClient'
 import TabsNavigation from './TabsNavigation'
 import MonthlyCharts from './MonthlyCharts'
+import SavingGoalsClient from './SavingGoalsClient'
 
 export const dynamic = 'force-dynamic'
 
