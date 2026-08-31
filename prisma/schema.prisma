@@ -15,9 +15,23 @@ enum CategoryType {
   SAVING_INVESTMENT
 }
 
+model User {
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  password       String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  monthlyBudgets MonthlyBudget[]
+  globalDebts    GlobalDebt[]
+  savingGoals    SavingGoal[]
+}
+
 model MonthlyBudget {
   id             String        @id @default(uuid())
   userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   year           Int
   month          Int
   initialBalance Decimal       @default(0.00) @db.Decimal(12, 2)
@@ -57,11 +71,12 @@ model Transaction {
 model GlobalDebt {
   id              String   @id @default(cuid())
   userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   creditorName    String
   totalAmount     Decimal  @db.Decimal(12, 2)
   paidAmount      Decimal  @default(0) @db.Decimal(12, 2)
-  monthlyPayment  Decimal  @default(0) @db.Decimal(12, 2) // Pago mensual estimado
-  paymentType     String   @default("FIXED")              // "FIXED" o "VARIABLE"
+  monthlyPayment  Decimal  @default(0) @db.Decimal(12, 2)
+  paymentType     String   @default("FIXED")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -69,11 +84,12 @@ model GlobalDebt {
 model SavingGoal {
   id              String   @id @default(cuid())
   userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title           String
   targetAmount    Decimal  @db.Decimal(12, 2)
   savedAmount     Decimal  @default(0) @db.Decimal(12, 2)
   periodAmount    Decimal  @default(0) @db.Decimal(12, 2)
-  frequency       String   @default("MONTHLY") // "WEEKLY", "FORTNIGHTLY", "MONTHLY"
+  frequency       String   @default("MONTHLY")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
