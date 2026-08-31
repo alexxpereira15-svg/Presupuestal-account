@@ -28,12 +28,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   let budget = null
   let globalDebts: any[] = []
+  let savingGoals: any[] = []
   let annualSummary = null
   let errorMessage = ''
 
   try {
     budget = await getOrCreateMonthlyBudget(userId, year, month)
     globalDebts = await getGlobalDebts(userId)
+    savingGoals = await getSavingGoals(userId)
     annualSummary = await getAnnualSummary(userId, year)
   } catch (error: any) {
     console.error('Error al conectar con la base de datos:', error)
@@ -88,7 +90,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const totalExpenseReal = fixedExpenses.totalReal + debts.totalReal + variableExpenses.totalReal + savings.totalReal
   const available = Number(budget.initialBalance || 0) + totalIncomeReal - totalExpenseReal
 
-  // 1. Vista Dashboard con Gráficas Mensuales
+  // 1. Vista Dashboard
   const dashboardView = (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -160,7 +162,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // 2. Vista Presupuesto Estimado
   const estimatedBudgetView = (
     <div className="space-y-6">
-      {/* Tarjeta Destacada de Saldo Inicial */}
       <div className="bg-slate-900/80 p-6 rounded-3xl border border-cyan-500/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xl backdrop-blur-xl">
         <div>
           <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider block">Configuración Base</span>
@@ -246,10 +247,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     </div>
   )
 
-  // 4. Vista Deudas Globales vinculada al Período Activo
+  // 4. Vista Deudas Globales
   const globalDebtsView = (
     <GlobalDebtsClient
       debts={globalDebts}
+      userId={userId}
+      currentBudgetId={budget.id}
+      currentYear={year}
+      currentMonth={month}
+    />
+  )
+
+  // 5. Vista Metas de Ahorro
+  const savingGoalsView = (
+    <SavingGoalsClient
+      goals={savingGoals}
       userId={userId}
       currentBudgetId={budget.id}
       currentYear={year}
@@ -288,6 +300,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         estimatedBudgetView={estimatedBudgetView}
         transactionsView={transactionsView}
         globalDebtsView={globalDebtsView}
+        savingGoalsView={savingGoalsView}
         annualSummaryView={annualSummaryView}
       />
     </div>
