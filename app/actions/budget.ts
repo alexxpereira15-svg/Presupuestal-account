@@ -68,7 +68,7 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
     })
   }
 
-  // --- REVISIÓN Y CLONADO AUTOMÁTICO DE DEUDAS FIJAS VIGENTES ---
+  // --- 1. CLONADO AUTOMÁTICO DE DEUDAS FIJAS VIGENTES ---
   const activeDebts = await prisma.globalDebt.findMany({
     where: { userId },
   })
@@ -77,18 +77,44 @@ export async function getOrCreateMonthlyBudget(userId: string, year: number, mon
     const remaining = Number(debt.totalAmount) - Number(debt.paidAmount)
     const monthlyPayment = Number(debt.monthlyPayment)
 
-    // Si la deuda tiene saldo pendiente y un pago mensual mayor a 0
     if (remaining > 0 && monthlyPayment > 0) {
       const existingItem = budget.items.find((item) => item.name === debt.creditorName && item.type === 'DEBT')
 
       if (!existingItem) {
-        // En pagos fijos se pone el pago completo, en variables se pone el estimado pero siempre se migra la cuota base
         const newItem = await prisma.budgetItem.create({
           data: {
             budgetId: budget.id,
             name: debt.creditorName,
             type: 'DEBT',
             estimatedAmount: monthlyPayment,
+          },
+        })
+        budget.items.push(newItem)
+      }
+    }
+  }
+
+  // --- 2. CLONADO AUTOMÁTICO DE METAS DE AHORRO VIGENTES ---
+  const activeGoals = await prisma.savingGoal.findMany({
+    where: { userId },
+  })
+
+  for (const goal of activeGoals) {
+    const remaining = Number(goal.targetAmount) - Number(goal.savedAmount)
+    let monthlyEstimate = Number(goal.periodAmount)
+    if (goal.frequency === 'FORTNIGHTLY') monthlyEstimate = monthlyEstimate * 2
+    if (goal.frequency === 'WEEKLY') monthlyEstimate = monthlyEstimate * 4
+
+    if (remaining > 0 && monthlyEstimate > 0) {
+      const existingItem = budget.items.find((item) => item.name === goal.title && item.type === 'SAVING_INVESTMENT')
+
+      if (!existingItem) {
+        const newItem = await prisma.budgetItem.create({
+          data: {
+            budgetId: budget.id,
+            name: goal.title,
+            type: 'SAVING_INVESTMENT',
+            estimatedAmount: monthlyEstimate,
           },
         })
         budget.items.push(newItem)
