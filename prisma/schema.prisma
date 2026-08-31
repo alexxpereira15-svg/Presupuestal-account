@@ -65,3 +65,15 @@ model GlobalDebt {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model SavingGoal {
+  id              String   @id @default(cuid())
+  userId          String
+  title           String
+  targetAmount    Decimal  @db.Decimal(12, 2)
+  savedAmount     Decimal  @default(0) @db.Decimal(12, 2)
+  periodAmount    Decimal  @default(0) @db.Decimal(12, 2)
+  frequency       String   @default("MONTHLY") // "WEEKLY", "FORTNIGHTLY", "MONTHLY"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
