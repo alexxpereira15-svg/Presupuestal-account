@@ -1,3 +1,5 @@
+import { auth, signOut } from '../auth'
+import { redirect } from 'next/navigation'
 import { getOrCreateMonthlyBudget } from './actions/budget'
 import { getGlobalDebts } from './actions/debt'
 import { getAnnualSummary } from './actions/annual'
@@ -20,11 +22,19 @@ interface HomePageProps {
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
+  // Verificación de Autenticación
+  const session = await auth()
+
+  if (!session || !session.user?.id) {
+    redirect('/login')
+  }
+
+  const userId = session.user.id
+  const userName = session.user.name || session.user.email
+
   const currentDate = new Date()
   const year = searchParams?.year ? parseInt(searchParams.year, 10) : currentDate.getFullYear()
   const month = searchParams?.month ? parseInt(searchParams.month, 10) : currentDate.getMonth() + 1
-
-  const userId = 'user_default'
 
   let budget = null
   let globalDebts: any[] = []
@@ -277,7 +287,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-1 z-10">
-          <span className="text-xs font-black text-emerald-400 uppercase tracking-widest block">Período Actual</span>
+          <div className="flex items-center gap-3 mb-1">
+            <span className="text-xs font-black text-emerald-400 uppercase tracking-widest block">Período Actual</span>
+            <span className="text-slate-600">•</span>
+            <form action={async () => {
+              'use server'
+              await signOut()
+            }}>
+              <button type="submit" className="text-xs text-rose-400 font-bold hover:underline cursor-pointer">
+                Cerrar Sesión ({userName})
+              </button>
+            </form>
+          </div>
           <h2 className="text-3xl sm:text-4xl font-black text-white capitalize tracking-tight">
             {new Date(year, month - 1).toLocaleString('es-ES', { month: 'long' })} {year}
           </h2>
