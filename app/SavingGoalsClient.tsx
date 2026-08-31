@@ -37,14 +37,12 @@ export default function SavingGoalsClient({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedGoal, setSelectedGoal] = useState<any>(null)
 
-  // Formulario creación
   const [title, setTitle] = useState('')
   const [targetAmount, setTargetAmount] = useState('')
   const [initialSaved, setInitialSaved] = useState('')
   const [periodAmount, setPeriodAmount] = useState('')
   const [frequency, setFrequency] = useState<'WEEKLY' | 'FORTNIGHTLY' | 'MONTHLY'>('FORTNIGHTLY')
 
-  // Formulario edición
   const [editTitle, setEditTitle] = useState('')
   const [editTarget, setEditTarget] = useState('')
   const [editSaved, setEditSaved] = useState('')
@@ -148,7 +146,7 @@ export default function SavingGoalsClient({
     targetDate.setDate(targetDate.getDate() + totalDays)
 
     const dateStr = targetDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })
-    return `${periodsLeft} abonos (${dateStr})`
+    return `${periodsLeft} abonos (~ ${dateStr})`
   }
 
   return (
