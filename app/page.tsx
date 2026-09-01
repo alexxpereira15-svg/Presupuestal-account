@@ -328,18 +328,62 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   )
 }
 
-function CategoryCard({ title, data, badgeColor, editable = false, isIncome = false }: { title: string; data: any; badgeColor: string; editable?: boolean; isIncome?: boolean }) {
+function CategoryCard({
+  title,
+  data,
+  badgeColor,
+  editable = false,
+  isIncome = false,
+}: {
+  title: string
+  data: any
+  badgeColor: string
+  editable?: boolean
+  isIncome?: boolean
+}) {
+  const diffTotal = isIncome
+    ? data.totalReal - data.totalEstimated
+    : data.totalEstimated - data.totalReal
+
+  const isOverBudget = !isIncome && diffTotal < 0
+  const isIncomeBehind = isIncome && diffTotal < 0
+
   return (
     <div className="bg-slate-900/70 rounded-3xl border border-slate-800/80 overflow-hidden shadow-xl backdrop-blur-xl">
-      <div className="bg-slate-800/40 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800">
+      <div className="bg-slate-800/40 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800">
         <div className="flex items-center gap-3">
           <span className={`px-3 py-1 rounded-full text-xs font-bold border ${badgeColor}`}>
             {title}
           </span>
         </div>
-        <div className="text-xs space-x-4 text-slate-400 font-mono">
-          <span>Est: <b className="text-slate-200">${data.totalEstimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b></span>
-          <span>Real: <b className={isIncome ? 'text-emerald-400 font-black' : 'text-rose-400 font-black'}>${data.totalReal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b></span>
+
+        <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+          <span className="text-slate-400">
+            Est: <b className="text-slate-200">${data.totalEstimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b>
+          </span>
+          <span className="text-slate-400">
+            Real: <b className={isIncome ? 'text-emerald-400 font-black' : 'text-rose-400 font-black'}>${data.totalReal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</b>
+          </span>
+
+          <span
+            className={`px-3 py-1 rounded-xl text-[11px] font-black border ${
+              isIncome
+                ? isIncomeBehind
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                : isOverBudget
+                ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 font-mono animate-pulse'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+            }`}
+          >
+            {isIncome
+              ? isIncomeBehind
+                ? `Faltan $${Math.abs(diffTotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+                : `+ $${diffTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })} Extra`
+              : isOverBudget
+              ? `Excedido por $${Math.abs(diffTotal).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+              : `Disponible: $${diffTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+          </span>
         </div>
       </div>
 
@@ -353,28 +397,57 @@ function CategoryCard({ title, data, badgeColor, editable = false, isIncome = fa
                 <th className="px-6 py-3">Rubro</th>
                 <th className="px-6 py-3 text-right">Presupuestado</th>
                 <th className="px-6 py-3 text-right">Real</th>
-                <th className="px-6 py-3 text-right">Diferencia</th>
+                <th className="px-6 py-3 text-right">Estado / Diferencia</th>
                 {editable && <th className="px-6 py-3 text-right">Acciones</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/40 text-xs font-semibold">
-              {data.items.map((item: any) => (
-                <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="px-6 py-3.5 font-bold text-white">{item.name}</td>
-                  <td className="px-6 py-3.5 text-right font-mono text-slate-300">${item.estimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                  <td className="px-6 py-3.5 text-right font-mono font-black text-slate-100">
-                    ${item.real.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className={`px-6 py-3.5 text-right font-mono font-bold ${item.diff < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
-                    ${item.diff.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                  </td>
-                  {editable && (
-                    <td className="px-6 py-3.5 text-right">
-                      <ItemRowActions item={item} />
+              {data.items.map((item: any) => {
+                const itemDiff = isIncome
+                  ? item.real - item.estimated
+                  : item.estimated - item.real
+
+                const isItemOver = !isIncome && itemDiff < 0
+                const isItemShort = isIncome && itemDiff < 0
+
+                return (
+                  <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
+                    <td className="px-6 py-3.5 font-bold text-white">{item.name}</td>
+                    <td className="px-6 py-3.5 text-right font-mono text-slate-300">
+                      ${item.estimated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="px-6 py-3.5 text-right font-mono font-black text-slate-100">
+                      ${item.real.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-6 py-3.5 text-right font-mono font-bold">
+                      <span
+                        className={`inline-block px-2.5 py-1 rounded-lg text-[11px] ${
+                          isIncome
+                            ? isItemShort
+                              ? 'text-amber-400 bg-amber-500/10'
+                              : 'text-emerald-400 bg-emerald-500/10'
+                            : isItemOver
+                            ? 'text-rose-400 bg-rose-500/10'
+                            : 'text-emerald-400 bg-emerald-500/10'
+                        }`}
+                      >
+                        {isIncome
+                          ? isItemShort
+                            ? `-$${Math.abs(itemDiff).toLocaleString('es-MX', { minimumFractionDigits: 2 })} (Faltante)`
+                            : `+$${itemDiff.toLocaleString('es-MX', { minimumFractionDigits: 2 })} (Meta alcanzada)`
+                          : isItemOver
+                          ? `-$${Math.abs(itemDiff).toLocaleString('es-MX', { minimumFractionDigits: 2 })} (Excedido)`
+                          : `+$${itemDiff.toLocaleString('es-MX', { minimumFractionDigits: 2 })} (Disponible)`}
+                      </span>
+                    </td>
+                    {editable && (
+                      <td className="px-6 py-3.5 text-right">
+                        <ItemRowActions item={item} />
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
